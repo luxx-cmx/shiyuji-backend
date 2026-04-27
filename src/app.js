@@ -20,13 +20,14 @@ import sysUserRoutes from './routes/sys/sysUsers.js';
 import sysLogRoutes from './routes/sys/logs.js';
 import sysParamRoutes from './routes/sys/params.js';
 import sysFoodCategoryRoutes from './routes/sys/foodCategories.js';
+import sysBackupRoutes from './routes/sys/backup.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '20mb' }));
 app.use(morgan('dev'));
 
 // 静态管理界面
@@ -47,6 +48,7 @@ app.use('/api/sys/users', sysUserRoutes);
 app.use('/api/sys/logs', sysLogRoutes);
 app.use('/api/sys/params', sysParamRoutes);
 app.use('/api/sys/food-categories', sysFoodCategoryRoutes);
+app.use('/api/sys/backup', sysBackupRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

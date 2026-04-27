@@ -1,293 +1,647 @@
 <!doctype html>
 <html lang="zh-CN">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>食愈记 · 管理后台</title>
-<style>
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: #f1f4f9; color: #1f2937; }
-  a { color: inherit; text-decoration: none; }
-  button { cursor: pointer; }
-
-  /* layout */
-  .app { display: flex; min-height: 100vh; }
-  .sidebar { width: 230px; background: linear-gradient(180deg,#1e293b,#0f172a); color: #cbd5e1; flex-shrink: 0; display: flex; flex-direction: column; }
-  .sidebar .logo { padding: 22px 20px; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 2px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-  .sidebar .nav { flex: 1; overflow-y: auto; padding: 12px 0; }
-  .nav-group { margin: 4px 0; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 22px; font-size: 14px; cursor: pointer; transition: all .15s; }
-  .nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
-  .nav-item.active { background: linear-gradient(90deg,#3b82f6,#6366f1); color: #fff; }
-  .nav-item .ico { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .55; }
-  .nav-sub { padding-left: 14px; }
-  .nav-sub .nav-item { padding: 8px 22px 8px 36px; font-size: 13px; opacity: .85; }
-
-  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .topbar { height: 58px; background: #fff; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
-  .topbar .crumbs { font-size: 14px; color: #475569; }
-  .topbar .user { display: flex; align-items: center; gap: 12px; font-size: 13px; }
-  .topbar .user .role { background: #eef2ff; color: #4f46e5; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
-
-  .content { padding: 22px; flex: 1; overflow-y: auto; }
-  .panel { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 2px rgba(15,23,42,.06); margin-bottom: 18px; }
-  .panel h3 { margin: 0 0 14px; font-size: 16px; }
-
-  /* table */
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { padding: 9px 10px; border-bottom: 1px solid #f1f5f9; text-align: left; vertical-align: middle; }
-  th { background: #f8fafc; font-weight: 600; color: #475569; font-size: 12px; }
-  tbody tr:hover { background: #fafbff; }
-
-  /* form */
-  .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
-  input, select, textarea { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; background: #fff; outline: none; transition: border-color .15s; font-family: inherit; }
-  input:focus, select:focus, textarea:focus { border-color: #6366f1; }
-  label { font-size: 13px; color: #475569; }
-
-  /* button */
-  .btn { padding: 6px 14px; border: 0; border-radius: 6px; background: #6366f1; color: #fff; font-size: 13px; transition: .15s; }
-  .btn:hover { background: #4f46e5; }
-  .btn.secondary { background: #e2e8f0; color: #1e293b; }
-  .btn.secondary:hover { background: #cbd5e1; }
-  .btn.danger { background: #ef4444; }
-  .btn.danger:hover { background: #dc2626; }
-  .btn.sm { padding: 3px 9px; font-size: 12px; }
-  .btn:disabled { opacity: .5; cursor: not-allowed; }
-
-  /* tag */
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; background: #e2e8f0; color: #334155; margin-right: 4px; }
-  .tag.green { background: #dcfce7; color: #166534; }
-  .tag.red { background: #fee2e2; color: #991b1b; }
-  .tag.blue { background: #dbeafe; color: #1e40af; }
-
-  /* dashboard cards */
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 14px; }
-  .stat-card { background: linear-gradient(135deg,#3b82f6,#6366f1); color: #fff; padding: 18px; border-radius: 10px; }
-  .stat-card .label { font-size: 13px; opacity: .85; }
-  .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
-
-  /* modal */
-  .modal-mask { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; align-items: center; justify-content: center; z-index: 100; }
-  .modal-mask.show { display: flex; }
-  .modal { background: #fff; border-radius: 10px; padding: 22px; min-width: 460px; max-width: 90vw; max-height: 86vh; overflow-y: auto; }
-  .modal h4 { margin: 0 0 14px; font-size: 16px; }
-  .modal .form-row { margin-bottom: 10px; }
-  .modal .form-row label { width: 96px; }
-  .modal .form-row input, .modal .form-row select, .modal .form-row textarea { flex: 1; min-width: 200px; }
-  .modal .actions { text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f1f5f9; }
-
-  /* tree-checkbox */
-  .tree { font-size: 13px; max-height: 420px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; }
-  .tree-node { padding: 3px 0; }
-  .tree-node label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-  .tree-children { padding-left: 20px; }
-
-  .empty { padding: 40px; text-align: center; color: #94a3b8; font-size: 14px; }
-  .pager { margin-top: 12px; display: flex; gap: 6px; align-items: center; justify-content: flex-end; font-size: 13px; }
-  .pager button { background: #fff; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
-  .pager button:disabled { opacity: .4; cursor: not-allowed; }
-
-  .hidden { display: none !important; }
-  .toast { position: fixed; top: 20px; right: 20px; background: #1e293b; color: #fff; padding: 10px 18px; border-radius: 6px; font-size: 13px; z-index: 200; opacity: 0; transition: .25s; }
-  .toast.show { opacity: 1; }
-  .toast.error { background: #dc2626; }
-  .toast.success { background: #16a34a; }
-</style>
-</head>
-<body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="logo">食愈记 · 后台</div>
-    <nav class="nav" id="nav"></nav>
-  </aside>
-  <main class="main">
-    <div class="topbar">
-      <div class="crumbs" id="crumbs">仪表盘</div>
-      <div class="user">
-        <span id="userName">-</span>
-        <span class="role" id="userRoles">-</span>
-        <button class="btn sm secondary" onclick="logout()">退出</button>
-      </div>
-    </div>
-    <div class="content" id="content"><div class="empty">加载中...</div></div>
-  </main>
-</div>
-
-<div class="modal-mask" id="modal">
-  <div class="modal" id="modalBox"></div>
-</div>
-<div class="toast" id="toast"></div>
-
-<script>
-const API = '/api';
-const TOKEN_KEY = 'sy_admin_token';
-let MENUS = [];
-let PERMS = [];
-let ROLES = [];
-let CURRENT_USER = null;
-let CURRENT_PATH = '/dashboard';
-
-/* ===================== 工具 ===================== */
-function getToken() { return localStorage.getItem(TOKEN_KEY); }
-function authHeaders() { return { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }; }
-function hasPerm(...codes) {
-  if (PERMS.includes('*')) return true;
-  return codes.some(c => PERMS.includes(c));
-}
-function toast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + type;
-  setTimeout(() => t.className = 'toast ' + type, 2000);
-}
-async function api(path, options={}) {
-  const res = await fetch(API + path, { ...options, headers: { ...authHeaders(), ...(options.headers||{}) } });
-  if (res.status === 401) { localStorage.removeItem(TOKEN_KEY); location.href = '/index.html'; return; }
-  const text = await res.text();
-  let data; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  if (!res.ok) {
-    const msg = (data && data.message) || ('请求失败 ' + res.status);
-    toast(msg, 'error');
-    throw new Error(msg);
-  }
-  return data;
-}
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
-function fmtTime(t) { if (!t) return '-'; return new Date(t).toLocaleString('zh-CN', { hour12: false }); }
-
-/* ===================== 模态框 ===================== */
-function showModal(html) {
-  document.getElementById('modalBox').innerHTML = html;
-  document.getElementById('modal').classList.add('show');
-}
-function closeModal() { document.getElementById('modal').classList.remove('show'); }
-document.getElementById('modal').addEventListener('click', (e) => {
-  if (e.target.id === 'modal') closeModal();
-});
-
-/* ===================== 启动 ===================== */
-async function boot() {
-  if (!getToken()) { location.href = '/index.html'; return; }
-  try {
-    const me = await api('/auth/me');
-    CURRENT_USER = me.user;
-    MENUS = me.menus || [];
-    PERMS = me.perms || [];
-    ROLES = me.roles || [];
-    document.getElementById('userName').textContent = (me.user && (me.user.nickname || me.user.username)) || '-';
-    document.getElementById('userRoles').textContent = ROLES.join(' · ') || 'guest';
-    renderNav();
-    // 默认打开第一个可见菜单
-    const first = findFirstMenu(MENUS);
-    if (first) navigate(first.path || '/dashboard', first.menu_name); else navigate('/dashboard', '仪表盘');
-  } catch (e) { console.error(e); }
-}
-function findFirstMenu(list) {
-  for (const m of list) {
-    if (m.type === 'menu' && m.path) return m;
-    if (m.children && m.children.length) {
-      const sub = findFirstMenu(m.children);
-      if (sub) return sub;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>食愈记 · 管理后台</title>
+  <style>
+    * {
+      box-sizing: border-box;
     }
-  }
-  return null;
-}
 
-/* ===================== 左侧菜单渲染 ===================== */
-function renderNav() {
-  const root = document.getElementById('nav');
-  root.innerHTML = MENUS.filter(m => m.type !== 'button').map(renderNavNode).join('');
-}
-function renderNavNode(m) {
-  const subs = (m.children || []).filter(c => c.type !== 'button');
-  if (subs.length) {
-    return `<div class="nav-group">
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f1f4f9;
+      color: #1f2937;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* layout */
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 230px;
+      background: linear-gradient(180deg, #1e293b, #0f172a);
+      color: #cbd5e1;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar .logo {
+      padding: 22px 20px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 2px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar .nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+
+    .nav-group {
+      margin: 4px 0;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 22px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, .06);
+      color: #fff;
+    }
+
+    .nav-item.active {
+      background: linear-gradient(90deg, #3b82f6, #6366f1);
+      color: #fff;
+    }
+
+    .nav-item .ico {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .55;
+    }
+
+    .nav-sub {
+      padding-left: 14px;
+    }
+
+    .nav-sub .nav-item {
+      padding: 8px 22px 8px 36px;
+      font-size: 13px;
+      opacity: .85;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      height: 58px;
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .topbar .crumbs {
+      font-size: 14px;
+      color: #475569;
+    }
+
+    .topbar .user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .topbar .user .role {
+      background: #eef2ff;
+      color: #4f46e5;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .content {
+      padding: 22px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .panel {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .06);
+      margin-bottom: 18px;
+    }
+
+    .panel h3 {
+      margin: 0 0 14px;
+      font-size: 16px;
+    }
+
+    /* table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+      font-size: 12px;
+    }
+
+    tbody tr:hover {
+      background: #fafbff;
+    }
+
+    /* form */
+    .form-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    input,
+    select,
+    textarea {
+      padding: 7px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+      outline: none;
+      transition: border-color .15s;
+      font-family: inherit;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #6366f1;
+    }
+
+    label {
+      font-size: 13px;
+      color: #475569;
+    }
+
+    /* button */
+    .btn {
+      padding: 6px 14px;
+      border: 0;
+      border-radius: 6px;
+      background: #6366f1;
+      color: #fff;
+      font-size: 13px;
+      transition: .15s;
+    }
+
+    .btn:hover {
+      background: #4f46e5;
+    }
+
+    .btn.secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .btn.secondary:hover {
+      background: #cbd5e1;
+    }
+
+    .btn.danger {
+      background: #ef4444;
+    }
+
+    .btn.danger:hover {
+      background: #dc2626;
+    }
+
+    .btn.sm {
+      padding: 3px 9px;
+      font-size: 12px;
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    /* tag */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      background: #e2e8f0;
+      color: #334155;
+      margin-right: 4px;
+    }
+
+    .tag.green {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag.red {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .tag.blue {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    /* dashboard cards */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #fff;
+      padding: 18px;
+      border-radius: 10px;
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      opacity: .85;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* modal */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-mask.show {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 22px;
+      min-width: 460px;
+      max-width: 90vw;
+      max-height: 86vh;
+      overflow-y: auto;
+    }
+
+    .modal h4 {
+      margin: 0 0 14px;
+      font-size: 16px;
+    }
+
+    .modal .form-row {
+      margin-bottom: 10px;
+    }
+
+    .modal .form-row label {
+      width: 96px;
+    }
+
+    .modal .form-row input,
+    .modal .form-row select,
+    .modal .form-row textarea {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .modal .actions {
+      text-align: right;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    /* tree-checkbox */
+    .tree {
+      font-size: 13px;
+      max-height: 420px;
+      overflow-y: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .tree-node {
+      padding: 3px 0;
+    }
+
+    .tree-node label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .tree-children {
+      padding-left: 20px;
+    }
+
+    .empty {
+      padding: 40px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .pager {
+      margin-top: 12px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 13px;
+    }
+
+    .pager button {
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    .pager button:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      z-index: 200;
+      opacity: 0;
+      transition: .25s;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    .toast.error {
+      background: #dc2626;
+    }
+
+    .toast.success {
+      background: #16a34a;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">食愈记 · 后台</div>
+      <nav class="nav" id="nav"></nav>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <div class="crumbs" id="crumbs">仪表盘</div>
+        <div class="user">
+          <span id="userName">-</span>
+          <span class="role" id="userRoles">-</span>
+          <button class="btn sm secondary" onclick="logout()">退出</button>
+        </div>
+      </div>
+      <div class="content" id="content">
+        <div class="empty">加载中...</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-mask" id="modal">
+    <div class="modal" id="modalBox"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '/api';
+    const TOKEN_KEY = 'sy_admin_token';
+    let MENUS = [];
+    let PERMS = [];
+    let ROLES = [];
+    let CURRENT_USER = null;
+    let CURRENT_PATH = '/dashboard';
+
+    /* ===================== 工具 ===================== */
+    function getToken() { return localStorage.getItem(TOKEN_KEY); }
+    function authHeaders() { return { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }; }
+    function hasPerm(...codes) {
+      if (PERMS.includes('*')) return true;
+      return codes.some(c => PERMS.includes(c));
+    }
+    function toast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.className = 'toast ' + type, 2000);
+    }
+    async function api(path, options = {}) {
+      const res = await fetch(API + path, { ...options, headers: { ...authHeaders(), ...(options.headers || {}) } });
+      if (res.status === 401) { localStorage.removeItem(TOKEN_KEY); location.href = '/index.html'; return; }
+      const text = await res.text();
+      let data; try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+      if (!res.ok) {
+        const msg = (data && data.message) || ('请求失败 ' + res.status);
+        toast(msg, 'error');
+        throw new Error(msg);
+      }
+      return data;
+    }
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function fmtTime(t) { if (!t) return '-'; return new Date(t).toLocaleString('zh-CN', { hour12: false }); }
+
+    /* ===================== 模态框 ===================== */
+    function showModal(html) {
+      document.getElementById('modalBox').innerHTML = html;
+      document.getElementById('modal').classList.add('show');
+    }
+    function closeModal() { document.getElementById('modal').classList.remove('show'); }
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') closeModal();
+    });
+
+    /* ===================== 启动 ===================== */
+    async function boot() {
+      if (!getToken()) { location.href = '/index.html'; return; }
+      try {
+        const me = await api('/auth/me');
+        CURRENT_USER = me.user;
+        MENUS = me.menus || [];
+        PERMS = me.perms || [];
+        ROLES = me.roles || [];
+        document.getElementById('userName').textContent = (me.user && (me.user.nickname || me.user.username)) || '-';
+        document.getElementById('userRoles').textContent = ROLES.join(' · ') || 'guest';
+        renderNav();
+        // 默认打开第一个可见菜单
+        const first = findFirstMenu(MENUS);
+        if (first) navigate(first.path || '/dashboard', first.menu_name); else navigate('/dashboard', '仪表盘');
+      } catch (e) { console.error(e); }
+    }
+    function findFirstMenu(list) {
+      for (const m of list) {
+        if (m.type === 'menu' && m.path) return m;
+        if (m.children && m.children.length) {
+          const sub = findFirstMenu(m.children);
+          if (sub) return sub;
+        }
+      }
+      return null;
+    }
+
+    /* ===================== 左侧菜单渲染 ===================== */
+    function renderNav() {
+      const root = document.getElementById('nav');
+      root.innerHTML = MENUS.filter(m => m.type !== 'button').map(renderNavNode).join('');
+    }
+    function renderNavNode(m) {
+      const subs = (m.children || []).filter(c => c.type !== 'button');
+      if (subs.length) {
+        return `<div class="nav-group">
       <div class="nav-item" onclick="this.nextElementSibling.classList.toggle('hidden')">
         <span class="ico"></span>${escapeHtml(m.menu_name)}
       </div>
       <div class="nav-sub">${subs.map(renderNavNode).join('')}</div>
     </div>`;
-  }
-  return `<div class="nav-item" data-path="${m.path||''}" onclick="navigate('${m.path||''}','${escapeHtml(m.menu_name)}')">
+      }
+      return `<div class="nav-item" data-path="${m.path || ''}" onclick="navigate('${m.path || ''}','${escapeHtml(m.menu_name)}')">
     <span class="ico"></span>${escapeHtml(m.menu_name)}
   </div>`;
-}
+    }
 
-function navigate(path, label) {
-  if (!path) return;
-  CURRENT_PATH = path;
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.path === path);
-  });
-  document.getElementById('crumbs').textContent = label || path;
-  const view = ROUTES[path];
-  if (view) view(); else document.getElementById('content').innerHTML = `<div class="panel"><div class="empty">页面 ${escapeHtml(path)} 未实现</div></div>`;
-}
+    function navigate(path, label) {
+      if (!path) return;
+      CURRENT_PATH = path;
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.path === path);
+      });
+      document.getElementById('crumbs').textContent = label || path;
+      const view = ROUTES[path];
+      if (view) view(); else document.getElementById('content').innerHTML = `<div class="panel"><div class="empty">页面 ${escapeHtml(path)} 未实现</div></div>`;
+    }
 
-function logout() {
-  api('/auth/logout', { method: 'POST' }).finally(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    location.href = '/index.html';
-  });
-}
+    function logout() {
+      api('/auth/logout', { method: 'POST' }).finally(() => {
+        localStorage.removeItem(TOKEN_KEY);
+        location.href = '/index.html';
+      });
+    }
 
-/* ===================== 路由表 ===================== */
-const ROUTES = {
-  '/dashboard': viewDashboard,
-  '/user': viewUserList,
-  '/user/list': viewUserList,
-  '/food': viewFoodList,
-  '/food/list': viewFoodList,
-  '/food/statistic': viewFoodStat,
-  '/user/analysis': viewUserAnalysis,
-  '/permission': viewDept,
-  '/permission/dept': viewDept,
-  '/permission/role': viewRole,
-  '/permission/menu': viewMenu,
-  '/permission/log': viewLog,
-  '/system': viewFoodCategory,
-  '/system/foodCategory': viewFoodCategory,
-  '/system/param': viewParam,
-  '/system/backup': viewBackup,
-};
+    /* ===================== 路由表 ===================== */
+    const ROUTES = {
+      '/dashboard': viewDashboard,
+      '/user': viewUserList,
+      '/user/list': viewUserList,
+      '/food': viewFoodList,
+      '/food/list': viewFoodList,
+      '/food/statistic': viewFoodStat,
+      '/user/analysis': viewUserAnalysis,
+      '/permission': viewDept,
+      '/permission/dept': viewDept,
+      '/permission/role': viewRole,
+      '/permission/menu': viewMenu,
+      '/permission/log': viewLog,
+      '/system': viewFoodCategory,
+      '/system/foodCategory': viewFoodCategory,
+      '/system/param': viewParam,
+      '/system/backup': viewBackup,
+    };
 
-/* ===================== 仪表盘 ===================== */
-async function viewDashboard() {
-  const c = document.getElementById('content');
-  c.innerHTML = `<div class="panel"><div id="dashStats" class="stat-grid"><div class="empty">加载中...</div></div></div>
+    /* ===================== 仪表盘 ===================== */
+    async function viewDashboard() {
+      const c = document.getElementById('content');
+      c.innerHTML = `<div class="panel"><div id="dashStats" class="stat-grid"><div class="empty">加载中...</div></div></div>
     <div class="panel"><h3>更新记录</h3><div id="dashUpdates"></div></div>`;
-  try {
-    const stats = await api('/dashboard/stats');
-    const cards = [
-      { label: '总用户数', value: stats.totalUsers ?? '-' },
-      { label: '今日新增用户', value: stats.todayNewUsers ?? '-' },
-      { label: '食物总数', value: stats.totalFoods ?? '-' },
-      { label: '今日新增食物', value: stats.todayNewFoods ?? '-' },
-      { label: '今日饮食记录', value: stats.todayDietRecords ?? '-' },
-      { label: '活跃用户', value: stats.activeUsers ?? '-' },
-    ];
-    document.getElementById('dashStats').innerHTML = cards.map(x => `
+      try {
+        const stats = await api('/dashboard/stats');
+        const cards = [
+          { label: '总用户数', value: stats.totalUsers ?? '-' },
+          { label: '今日新增用户', value: stats.todayNewUsers ?? '-' },
+          { label: '食物总数', value: stats.totalFoods ?? '-' },
+          { label: '今日新增食物', value: stats.todayNewFoods ?? '-' },
+          { label: '今日饮食记录', value: stats.todayDietRecords ?? '-' },
+          { label: '活跃用户', value: stats.activeUsers ?? '-' },
+        ];
+        document.getElementById('dashStats').innerHTML = cards.map(x => `
       <div class="stat-card"><div class="label">${x.label}</div><div class="value">${x.value}</div></div>
     `).join('');
-  } catch {}
-  try {
-    const updates = await api('/dashboard/app-updates');
-    document.getElementById('dashUpdates').innerHTML = `
+      } catch { }
+      try {
+        const updates = await api('/dashboard/app-updates');
+        document.getElementById('dashUpdates').innerHTML = `
       <table><thead><tr><th>版本</th><th>说明</th><th>发布时间</th><th>强制更新</th></tr></thead>
-      <tbody>${(updates||[]).map(u => `<tr>
-        <td>${escapeHtml(u.version)}</td><td>${escapeHtml(u.release_notes||'')}</td>
-        <td>${u.release_date||'-'}</td><td>${u.force_update?'<span class="tag red">是</span>':'<span class="tag">否</span>'}</td>
+      <tbody>${(updates || []).map(u => `<tr>
+        <td>${escapeHtml(u.version)}</td><td>${escapeHtml(u.release_notes || '')}</td>
+        <td>${u.release_date || '-'}</td><td>${u.force_update ? '<span class="tag red">是</span>' : '<span class="tag">否</span>'}</td>
       </tr>`).join('') || '<tr><td colspan="4" class="empty">暂无</td></tr>'}</tbody></table>`;
-  } catch {}
-}
+      } catch { }
+    }
 
-/* ===================== 用户管理 ===================== */
-async function viewUserList() {
-  const c = document.getElementById('content');
-  c.innerHTML = `<div class="panel">
+    /* ===================== 用户管理 ===================== */
+    async function viewUserList() {
+      const c = document.getElementById('content');
+      c.innerHTML = `<div class="panel">
     <h3>用户管理</h3>
     <div class="form-row">
       <input id="uKw" placeholder="搜索用户名/昵称" />
@@ -298,369 +652,369 @@ async function viewUserList() {
     <div id="userTable"></div>
     <div class="pager" id="userPager"></div>
   </div>`;
-  loadUsers();
-}
-let _userPage = 1;
-async function loadUsers(page) {
-  if (page) _userPage = page;
-  const kw = document.getElementById('uKw').value.trim();
-  const status = document.getElementById('uStatus').value;
-  const qs = new URLSearchParams({ page: _userPage, pageSize: 15 });
-  if (kw) qs.set('keyword', kw);
-  if (status) qs.set('status', status);
-  const data = await api('/users?' + qs);
-  const rows = data.data || [];
-  document.getElementById('userTable').innerHTML = `
+      loadUsers();
+    }
+    let _userPage = 1;
+    async function loadUsers(page) {
+      if (page) _userPage = page;
+      const kw = document.getElementById('uKw').value.trim();
+      const status = document.getElementById('uStatus').value;
+      const qs = new URLSearchParams({ page: _userPage, pageSize: 15 });
+      if (kw) qs.set('keyword', kw);
+      if (status) qs.set('status', status);
+      const data = await api('/users?' + qs);
+      const rows = data.data || [];
+      document.getElementById('userTable').innerHTML = `
     <table><thead><tr>
       <th>ID</th><th>用户名</th><th>昵称</th><th>性别</th><th>身高</th><th>状态</th><th>注册时间</th><th>操作</th>
     </tr></thead><tbody>${rows.map(u => `<tr>
-      <td>${u.id}</td><td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.nickname||'')}</td>
-      <td>${escapeHtml(u.gender||'-')}</td><td>${u.height||'-'}</td>
-      <td><span class="tag ${u.status==='active'?'green':'red'}">${u.status||'active'}</span></td>
+      <td>${u.id}</td><td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.nickname || '')}</td>
+      <td>${escapeHtml(u.gender || '-')}</td><td>${u.height || '-'}</td>
+      <td><span class="tag ${u.status === 'active' ? 'green' : 'red'}">${u.status || 'active'}</span></td>
       <td>${fmtTime(u.created_at)}</td>
       <td>
         ${hasPerm('user:edit') ? `<button class="btn sm secondary" onclick='editUser(${JSON.stringify(u)})'>编辑</button>` : ''}
         ${hasPerm('user:delete') ? `<button class="btn sm danger" onclick="delUser(${u.id})">删除</button>` : ''}
       </td>
     </tr>`).join('') || '<tr><td colspan="8" class="empty">暂无数据</td></tr>'}</tbody></table>`;
-  document.getElementById('userPager').innerHTML = pagerHtml(data, 'loadUsers');
-}
-function pagerHtml(data, fn) {
-  const totalPages = Math.max(1, Math.ceil((data.total||0) / (data.pageSize||10)));
-  return `<span>共 ${data.total||0} 条，第 ${data.page} / ${totalPages} 页</span>
-    <button onclick="${fn}(${(data.page||1)-1})" ${(data.page||1)<=1?'disabled':''}>上一页</button>
-    <button onclick="${fn}(${(data.page||1)+1})" ${(data.page||1)>=totalPages?'disabled':''}>下一页</button>`;
-}
-function editUser(u) {
-  u = u || {};
-  showModal(`<h4>${u.id?'编辑':'新增'}用户</h4>
-    <div class="form-row"><label>用户名</label><input id="f_username" value="${escapeHtml(u.username||'')}" ${u.id?'disabled':''} /></div>
-    ${u.id?'':'<div class="form-row"><label>密码</label><input id="f_password" type="password" /></div>'}
-    <div class="form-row"><label>昵称</label><input id="f_nickname" value="${escapeHtml(u.nickname||'')}" /></div>
+      document.getElementById('userPager').innerHTML = pagerHtml(data, 'loadUsers');
+    }
+    function pagerHtml(data, fn) {
+      const totalPages = Math.max(1, Math.ceil((data.total || 0) / (data.pageSize || 10)));
+      return `<span>共 ${data.total || 0} 条，第 ${data.page} / ${totalPages} 页</span>
+    <button onclick="${fn}(${(data.page || 1) - 1})" ${(data.page || 1) <= 1 ? 'disabled' : ''}>上一页</button>
+    <button onclick="${fn}(${(data.page || 1) + 1})" ${(data.page || 1) >= totalPages ? 'disabled' : ''}>下一页</button>`;
+    }
+    function editUser(u) {
+      u = u || {};
+      showModal(`<h4>${u.id ? '编辑' : '新增'}用户</h4>
+    <div class="form-row"><label>用户名</label><input id="f_username" value="${escapeHtml(u.username || '')}" ${u.id ? 'disabled' : ''} /></div>
+    ${u.id ? '' : '<div class="form-row"><label>密码</label><input id="f_password" type="password" /></div>'}
+    <div class="form-row"><label>昵称</label><input id="f_nickname" value="${escapeHtml(u.nickname || '')}" /></div>
     <div class="form-row"><label>性别</label><select id="f_gender">
-      <option value="">-</option><option value="male" ${u.gender==='male'?'selected':''}>男</option>
-      <option value="female" ${u.gender==='female'?'selected':''}>女</option></select></div>
-    <div class="form-row"><label>身高(cm)</label><input id="f_height" type="number" value="${u.height||''}" /></div>
-    <div class="form-row"><label>年龄</label><input id="f_age" type="number" value="${u.age||''}" /></div>
+      <option value="">-</option><option value="male" ${u.gender === 'male' ? 'selected' : ''}>男</option>
+      <option value="female" ${u.gender === 'female' ? 'selected' : ''}>女</option></select></div>
+    <div class="form-row"><label>身高(cm)</label><input id="f_height" type="number" value="${u.height || ''}" /></div>
+    <div class="form-row"><label>年龄</label><input id="f_age" type="number" value="${u.age || ''}" /></div>
     <div class="form-row"><label>状态</label><select id="f_status">
-      <option value="active" ${u.status!=='disabled'?'selected':''}>启用</option>
-      <option value="disabled" ${u.status==='disabled'?'selected':''}>禁用</option></select></div>
+      <option value="active" ${u.status !== 'disabled' ? 'selected' : ''}>启用</option>
+      <option value="disabled" ${u.status === 'disabled' ? 'selected' : ''}>禁用</option></select></div>
     <div class="actions">
       <button class="btn secondary" onclick="closeModal()">取消</button>
-      <button class="btn" onclick="saveUser(${u.id||0})">保存</button>
+      <button class="btn" onclick="saveUser(${u.id || 0})">保存</button>
     </div>`);
-}
-async function saveUser(id) {
-  const body = {
-    nickname: document.getElementById('f_nickname').value,
-    gender: document.getElementById('f_gender').value || null,
-    height: Number(document.getElementById('f_height').value) || null,
-    age: Number(document.getElementById('f_age').value) || null,
-    status: document.getElementById('f_status').value,
-  };
-  if (!id) {
-    body.username = document.getElementById('f_username').value.trim();
-    body.password = document.getElementById('f_password').value;
-    if (!body.username || !body.password) return toast('用户名密码必填','error');
-    await api('/users', { method:'POST', body: JSON.stringify(body) });
-  } else {
-    await api('/users/'+id, { method:'PUT', body: JSON.stringify(body) });
-  }
-  toast('保存成功','success'); closeModal(); loadUsers();
-}
-async function delUser(id) {
-  if (!confirm('确定删除该用户？')) return;
-  await api('/users/'+id, { method:'DELETE' });
-  toast('已删除','success'); loadUsers();
-}
+    }
+    async function saveUser(id) {
+      const body = {
+        nickname: document.getElementById('f_nickname').value,
+        gender: document.getElementById('f_gender').value || null,
+        height: Number(document.getElementById('f_height').value) || null,
+        age: Number(document.getElementById('f_age').value) || null,
+        status: document.getElementById('f_status').value,
+      };
+      if (!id) {
+        body.username = document.getElementById('f_username').value.trim();
+        body.password = document.getElementById('f_password').value;
+        if (!body.username || !body.password) return toast('用户名密码必填', 'error');
+        await api('/users', { method: 'POST', body: JSON.stringify(body) });
+      } else {
+        await api('/users/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      }
+      toast('保存成功', 'success'); closeModal(); loadUsers();
+    }
+    async function delUser(id) {
+      if (!confirm('确定删除该用户？')) return;
+      await api('/users/' + id, { method: 'DELETE' });
+      toast('已删除', 'success'); loadUsers();
+    }
 
-/* ===================== 食物管理 ===================== */
-async function viewFoodList() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 食物管理 ===================== */
+    async function viewFoodList() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>食物管理</h3>
     <div class="form-row">
       <input id="fKw" placeholder="搜索食物名" />
       <input id="fCat" placeholder="分类" />
       <button class="btn" onclick="loadFoods()">查询</button>
-      ${hasPerm('food:add')?'<button class="btn secondary" onclick="editFood()">新增</button>':''}
+      ${hasPerm('food:add') ? '<button class="btn secondary" onclick="editFood()">新增</button>' : ''}
     </div>
     <div id="foodTable"></div><div class="pager" id="foodPager"></div>
   </div>`;
-  loadFoods();
-}
-let _foodPage = 1;
-async function loadFoods(page) {
-  if (page) _foodPage = page;
-  const qs = new URLSearchParams({ page: _foodPage, pageSize: 15 });
-  const kw = document.getElementById('fKw').value.trim(); if (kw) qs.set('keyword', kw);
-  const cat = document.getElementById('fCat').value.trim(); if (cat) qs.set('category', cat);
-  const data = await api('/foods?' + qs);
-  const rows = data.data || [];
-  document.getElementById('foodTable').innerHTML = `
+      loadFoods();
+    }
+    let _foodPage = 1;
+    async function loadFoods(page) {
+      if (page) _foodPage = page;
+      const qs = new URLSearchParams({ page: _foodPage, pageSize: 15 });
+      const kw = document.getElementById('fKw').value.trim(); if (kw) qs.set('keyword', kw);
+      const cat = document.getElementById('fCat').value.trim(); if (cat) qs.set('category', cat);
+      const data = await api('/foods?' + qs);
+      const rows = data.data || [];
+      document.getElementById('foodTable').innerHTML = `
     <table><thead><tr><th>ID</th><th>名称</th><th>分类</th><th>热量(kcal)</th><th>创建时间</th><th>操作</th></tr></thead>
     <tbody>${rows.map(f => `<tr>
       <td>${f.id}</td><td>${escapeHtml(f.name)}</td><td><span class="tag blue">${escapeHtml(f.category)}</span></td>
       <td>${f.calories}</td><td>${fmtTime(f.created_at)}</td>
       <td>
-        ${hasPerm('food:edit')?`<button class="btn sm secondary" onclick='editFood(${JSON.stringify(f)})'>编辑</button>`:''}
-        ${hasPerm('food:delete')?`<button class="btn sm danger" onclick="delFood(${f.id})">删除</button>`:''}
+        ${hasPerm('food:edit') ? `<button class="btn sm secondary" onclick='editFood(${JSON.stringify(f)})'>编辑</button>` : ''}
+        ${hasPerm('food:delete') ? `<button class="btn sm danger" onclick="delFood(${f.id})">删除</button>` : ''}
       </td></tr>`).join('') || '<tr><td colspan="6" class="empty">暂无</td></tr>'}</tbody></table>`;
-  document.getElementById('foodPager').innerHTML = pagerHtml(data, 'loadFoods');
-}
-function editFood(f) {
-  f = f || {};
-  showModal(`<h4>${f.id?'编辑':'新增'}食物</h4>
-    <div class="form-row"><label>名称</label><input id="ff_name" value="${escapeHtml(f.name||'')}" /></div>
-    <div class="form-row"><label>分类</label><input id="ff_category" value="${escapeHtml(f.category||'')}" /></div>
-    <div class="form-row"><label>热量(kcal)</label><input id="ff_calories" type="number" value="${f.calories||''}" /></div>
+      document.getElementById('foodPager').innerHTML = pagerHtml(data, 'loadFoods');
+    }
+    function editFood(f) {
+      f = f || {};
+      showModal(`<h4>${f.id ? '编辑' : '新增'}食物</h4>
+    <div class="form-row"><label>名称</label><input id="ff_name" value="${escapeHtml(f.name || '')}" /></div>
+    <div class="form-row"><label>分类</label><input id="ff_category" value="${escapeHtml(f.category || '')}" /></div>
+    <div class="form-row"><label>热量(kcal)</label><input id="ff_calories" type="number" value="${f.calories || ''}" /></div>
     <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
-    <button class="btn" onclick="saveFood(${f.id||0})">保存</button></div>`);
-}
-async function saveFood(id) {
-  const body = {
-    name: document.getElementById('ff_name').value.trim(),
-    category: document.getElementById('ff_category').value.trim(),
-    calories: Number(document.getElementById('ff_calories').value)||0,
-  };
-  if (!body.name || !body.category) return toast('名称与分类必填','error');
-  if (id) await api('/foods/'+id,{method:'PUT',body:JSON.stringify(body)});
-  else await api('/foods',{method:'POST',body:JSON.stringify(body)});
-  toast('保存成功','success'); closeModal(); loadFoods();
-}
-async function delFood(id) {
-  if (!confirm('确定删除？')) return;
-  await api('/foods/'+id,{method:'DELETE'});
-  toast('已删除','success'); loadFoods();
-}
+    <button class="btn" onclick="saveFood(${f.id || 0})">保存</button></div>`);
+    }
+    async function saveFood(id) {
+      const body = {
+        name: document.getElementById('ff_name').value.trim(),
+        category: document.getElementById('ff_category').value.trim(),
+        calories: Number(document.getElementById('ff_calories').value) || 0,
+      };
+      if (!body.name || !body.category) return toast('名称与分类必填', 'error');
+      if (id) await api('/foods/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else await api('/foods', { method: 'POST', body: JSON.stringify(body) });
+      toast('保存成功', 'success'); closeModal(); loadFoods();
+    }
+    async function delFood(id) {
+      if (!confirm('确定删除？')) return;
+      await api('/foods/' + id, { method: 'DELETE' });
+      toast('已删除', 'success'); loadFoods();
+    }
 
-/* ===================== 食物统计 ===================== */
-async function viewFoodStat() {
-  document.getElementById('content').innerHTML = `<div class="panel"><h3>食物分类统计</h3><div id="foodStatTable"></div></div>
+    /* ===================== 食物统计 ===================== */
+    async function viewFoodStat() {
+      document.getElementById('content').innerHTML = `<div class="panel"><h3>食物分类统计</h3><div id="foodStatTable"></div></div>
     <div class="panel"><h3>热门收藏 Top</h3><div id="foodHotTable"></div></div>`;
-  try {
-    const cats = await api('/analytics/food-categories');
-    document.getElementById('foodStatTable').innerHTML = `<table><thead><tr><th>分类</th><th>数量</th></tr></thead>
-      <tbody>${(cats||[]).map(x=>`<tr><td>${escapeHtml(x.category)}</td><td>${x.count}</td></tr>`).join('')}</tbody></table>`;
-  } catch {}
-  try {
-    const hot = await api('/analytics/popular-favorites');
-    document.getElementById('foodHotTable').innerHTML = `<table><thead><tr><th>食物</th><th>收藏次数</th></tr></thead>
-      <tbody>${(hot||[]).map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.count}</td></tr>`).join('')}</tbody></table>`;
-  } catch {}
-}
+      try {
+        const cats = await api('/analytics/food-categories');
+        document.getElementById('foodStatTable').innerHTML = `<table><thead><tr><th>分类</th><th>数量</th></tr></thead>
+      <tbody>${(cats || []).map(x => `<tr><td>${escapeHtml(x.category)}</td><td>${x.count}</td></tr>`).join('')}</tbody></table>`;
+      } catch { }
+      try {
+        const hot = await api('/analytics/popular-favorites');
+        document.getElementById('foodHotTable').innerHTML = `<table><thead><tr><th>食物</th><th>收藏次数</th></tr></thead>
+      <tbody>${(hot || []).map(x => `<tr><td>${escapeHtml(x.name)}</td><td>${x.count}</td></tr>`).join('')}</tbody></table>`;
+      } catch { }
+    }
 
-/* ===================== 用户分析 ===================== */
-async function viewUserAnalysis() {
-  document.getElementById('content').innerHTML = `<div class="panel"><h3>用户行为分析</h3><div id="behaviorTable"></div></div>`;
-  try {
-    const data = await api('/analytics/user-behavior');
-    document.getElementById('behaviorTable').innerHTML = `<table><thead><tr><th>指标</th><th>值</th></tr></thead>
-      <tbody>${Object.entries(data||{}).map(([k,v])=>`<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(typeof v==='object'?JSON.stringify(v):String(v))}</td></tr>`).join('')}</tbody></table>`;
-  } catch {}
-}
+    /* ===================== 用户分析 ===================== */
+    async function viewUserAnalysis() {
+      document.getElementById('content').innerHTML = `<div class="panel"><h3>用户行为分析</h3><div id="behaviorTable"></div></div>`;
+      try {
+        const data = await api('/analytics/user-behavior');
+        document.getElementById('behaviorTable').innerHTML = `<table><thead><tr><th>指标</th><th>值</th></tr></thead>
+      <tbody>${Object.entries(data || {}).map(([k, v]) => `<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</td></tr>`).join('')}</tbody></table>`;
+      } catch { }
+    }
 
-/* ===================== 部门管理 ===================== */
-async function viewDept() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 部门管理 ===================== */
+    async function viewDept() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>部门管理</h3>
-    <div class="form-row">${hasPerm('dept:list')?'<button class="btn" onclick="editDept()">新增部门</button>':''}</div>
+    <div class="form-row">${hasPerm('dept:list') ? '<button class="btn" onclick="editDept()">新增部门</button>' : ''}</div>
     <div id="deptTable"></div></div>`;
-  loadDepts();
-}
-async function loadDepts() {
-  const list = await api('/sys/depts');
-  document.getElementById('deptTable').innerHTML = `<table><thead><tr><th>ID</th><th>父级</th><th>名称</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
-    <tbody>${(list||[]).map(d=>`<tr>
-      <td>${d.id}</td><td>${d.parent_id||0}</td><td>${escapeHtml(d.dept_name)}</td><td>${d.sort||0}</td>
-      <td><span class="tag ${d.status==='enable'?'green':'red'}">${d.status}</span></td>
+      loadDepts();
+    }
+    async function loadDepts() {
+      const list = await api('/sys/depts');
+      document.getElementById('deptTable').innerHTML = `<table><thead><tr><th>ID</th><th>父级</th><th>名称</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+    <tbody>${(list || []).map(d => `<tr>
+      <td>${d.id}</td><td>${d.parent_id || 0}</td><td>${escapeHtml(d.dept_name)}</td><td>${d.sort || 0}</td>
+      <td><span class="tag ${d.status === 'enable' ? 'green' : 'red'}">${d.status}</span></td>
       <td>
         <button class="btn sm secondary" onclick='editDept(${JSON.stringify(d)})'>编辑</button>
         <button class="btn sm danger" onclick="delDept(${d.id})">删除</button>
       </td></tr>`).join('') || '<tr><td colspan="6" class="empty">暂无</td></tr>'}</tbody></table>`;
-}
-function editDept(d) {
-  d = d || {};
-  showModal(`<h4>${d.id?'编辑':'新增'}部门</h4>
-    <div class="form-row"><label>父级ID</label><input id="d_parent" type="number" value="${d.parent_id||0}" /></div>
-    <div class="form-row"><label>名称</label><input id="d_name" value="${escapeHtml(d.dept_name||'')}" /></div>
-    <div class="form-row"><label>排序</label><input id="d_sort" type="number" value="${d.sort||0}" /></div>
+    }
+    function editDept(d) {
+      d = d || {};
+      showModal(`<h4>${d.id ? '编辑' : '新增'}部门</h4>
+    <div class="form-row"><label>父级ID</label><input id="d_parent" type="number" value="${d.parent_id || 0}" /></div>
+    <div class="form-row"><label>名称</label><input id="d_name" value="${escapeHtml(d.dept_name || '')}" /></div>
+    <div class="form-row"><label>排序</label><input id="d_sort" type="number" value="${d.sort || 0}" /></div>
     <div class="form-row"><label>状态</label><select id="d_status">
-      <option value="enable" ${d.status!=='disable'?'selected':''}>启用</option>
-      <option value="disable" ${d.status==='disable'?'selected':''}>禁用</option></select></div>
+      <option value="enable" ${d.status !== 'disable' ? 'selected' : ''}>启用</option>
+      <option value="disable" ${d.status === 'disable' ? 'selected' : ''}>禁用</option></select></div>
     <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
-    <button class="btn" onclick="saveDept(${d.id||0})">保存</button></div>`);
-}
-async function saveDept(id) {
-  const body = {
-    parent_id: Number(document.getElementById('d_parent').value)||0,
-    dept_name: document.getElementById('d_name').value.trim(),
-    sort: Number(document.getElementById('d_sort').value)||0,
-    status: document.getElementById('d_status').value,
-  };
-  if (!body.dept_name) return toast('名称必填','error');
-  if (id) await api('/sys/depts/'+id,{method:'PUT',body:JSON.stringify(body)});
-  else await api('/sys/depts',{method:'POST',body:JSON.stringify(body)});
-  toast('已保存','success'); closeModal(); loadDepts();
-}
-async function delDept(id) {
-  if (!confirm('确定删除？')) return;
-  await api('/sys/depts/'+id,{method:'DELETE'});
-  toast('已删除','success'); loadDepts();
-}
+    <button class="btn" onclick="saveDept(${d.id || 0})">保存</button></div>`);
+    }
+    async function saveDept(id) {
+      const body = {
+        parent_id: Number(document.getElementById('d_parent').value) || 0,
+        dept_name: document.getElementById('d_name').value.trim(),
+        sort: Number(document.getElementById('d_sort').value) || 0,
+        status: document.getElementById('d_status').value,
+      };
+      if (!body.dept_name) return toast('名称必填', 'error');
+      if (id) await api('/sys/depts/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else await api('/sys/depts', { method: 'POST', body: JSON.stringify(body) });
+      toast('已保存', 'success'); closeModal(); loadDepts();
+    }
+    async function delDept(id) {
+      if (!confirm('确定删除？')) return;
+      await api('/sys/depts/' + id, { method: 'DELETE' });
+      toast('已删除', 'success'); loadDepts();
+    }
 
-/* ===================== 角色管理 ===================== */
-async function viewRole() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 角色管理 ===================== */
+    async function viewRole() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>角色管理</h3>
-    <div class="form-row">${hasPerm('role:list')?'<button class="btn" onclick="editRole()">新增角色</button>':''}</div>
+    <div class="form-row">${hasPerm('role:list') ? '<button class="btn" onclick="editRole()">新增角色</button>' : ''}</div>
     <div id="roleTable"></div></div>`;
-  loadRoles();
-}
-async function loadRoles() {
-  const list = await api('/sys/roles');
-  document.getElementById('roleTable').innerHTML = `<table><thead>
+      loadRoles();
+    }
+    async function loadRoles() {
+      const list = await api('/sys/roles');
+      document.getElementById('roleTable').innerHTML = `<table><thead>
     <tr><th>ID</th><th>名称</th><th>编码</th><th>状态</th><th>备注</th><th>操作</th></tr></thead>
-    <tbody>${(list||[]).map(r=>`<tr>
-      <td>${r.id}</td><td>${escapeHtml(r.role_name)}</td><td><span class="tag blue">${escapeHtml(r.role_code||'')}</span></td>
-      <td><span class="tag ${r.status==='enable'?'green':'red'}">${r.status}</span></td>
-      <td>${escapeHtml(r.remark||'')}</td>
+    <tbody>${(list || []).map(r => `<tr>
+      <td>${r.id}</td><td>${escapeHtml(r.role_name)}</td><td><span class="tag blue">${escapeHtml(r.role_code || '')}</span></td>
+      <td><span class="tag ${r.status === 'enable' ? 'green' : 'red'}">${r.status}</span></td>
+      <td>${escapeHtml(r.remark || '')}</td>
       <td>
         <button class="btn sm" onclick="assignMenu(${r.id},'${escapeHtml(r.role_name)}')">分配菜单</button>
         <button class="btn sm secondary" onclick='editRole(${JSON.stringify(r)})'>编辑</button>
-        ${r.role_code==='super_admin'?'':`<button class="btn sm danger" onclick="delRole(${r.id})">删除</button>`}
+        ${r.role_code === 'super_admin' ? '' : `<button class="btn sm danger" onclick="delRole(${r.id})">删除</button>`}
       </td></tr>`).join('')}</tbody></table>`;
-}
-function editRole(r) {
-  r = r || {};
-  showModal(`<h4>${r.id?'编辑':'新增'}角色</h4>
-    <div class="form-row"><label>名称</label><input id="r_name" value="${escapeHtml(r.role_name||'')}" /></div>
-    <div class="form-row"><label>编码</label><input id="r_code" value="${escapeHtml(r.role_code||'')}" /></div>
-    <div class="form-row"><label>备注</label><input id="r_remark" value="${escapeHtml(r.remark||'')}" /></div>
+    }
+    function editRole(r) {
+      r = r || {};
+      showModal(`<h4>${r.id ? '编辑' : '新增'}角色</h4>
+    <div class="form-row"><label>名称</label><input id="r_name" value="${escapeHtml(r.role_name || '')}" /></div>
+    <div class="form-row"><label>编码</label><input id="r_code" value="${escapeHtml(r.role_code || '')}" /></div>
+    <div class="form-row"><label>备注</label><input id="r_remark" value="${escapeHtml(r.remark || '')}" /></div>
     <div class="form-row"><label>状态</label><select id="r_status">
-      <option value="enable" ${r.status!=='disable'?'selected':''}>启用</option>
-      <option value="disable" ${r.status==='disable'?'selected':''}>禁用</option></select></div>
+      <option value="enable" ${r.status !== 'disable' ? 'selected' : ''}>启用</option>
+      <option value="disable" ${r.status === 'disable' ? 'selected' : ''}>禁用</option></select></div>
     <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
-    <button class="btn" onclick="saveRole(${r.id||0})">保存</button></div>`);
-}
-async function saveRole(id) {
-  const body = {
-    role_name: document.getElementById('r_name').value.trim(),
-    role_code: document.getElementById('r_code').value.trim(),
-    remark: document.getElementById('r_remark').value,
-    status: document.getElementById('r_status').value,
-  };
-  if (!body.role_name || !body.role_code) return toast('名称与编码必填','error');
-  if (id) await api('/sys/roles/'+id,{method:'PUT',body:JSON.stringify(body)});
-  else await api('/sys/roles',{method:'POST',body:JSON.stringify(body)});
-  toast('已保存','success'); closeModal(); loadRoles();
-}
-async function delRole(id) {
-  if (!confirm('确定删除？')) return;
-  await api('/sys/roles/'+id,{method:'DELETE'});
-  toast('已删除','success'); loadRoles();
-}
-async function assignMenu(roleId, roleName) {
-  const [allMenus, bound] = await Promise.all([api('/sys/menus'), api(`/sys/roles/${roleId}/menus`)]);
-  const boundSet = new Set(bound);
-  const tree = buildMenuTreeForUI(allMenus);
-  const renderTree = (nodes) => nodes.map(n => `
+    <button class="btn" onclick="saveRole(${r.id || 0})">保存</button></div>`);
+    }
+    async function saveRole(id) {
+      const body = {
+        role_name: document.getElementById('r_name').value.trim(),
+        role_code: document.getElementById('r_code').value.trim(),
+        remark: document.getElementById('r_remark').value,
+        status: document.getElementById('r_status').value,
+      };
+      if (!body.role_name || !body.role_code) return toast('名称与编码必填', 'error');
+      if (id) await api('/sys/roles/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else await api('/sys/roles', { method: 'POST', body: JSON.stringify(body) });
+      toast('已保存', 'success'); closeModal(); loadRoles();
+    }
+    async function delRole(id) {
+      if (!confirm('确定删除？')) return;
+      await api('/sys/roles/' + id, { method: 'DELETE' });
+      toast('已删除', 'success'); loadRoles();
+    }
+    async function assignMenu(roleId, roleName) {
+      const [allMenus, bound] = await Promise.all([api('/sys/menus'), api(`/sys/roles/${roleId}/menus`)]);
+      const boundSet = new Set(bound);
+      const tree = buildMenuTreeForUI(allMenus);
+      const renderTree = (nodes) => nodes.map(n => `
     <div class="tree-node">
-      <label><input type="checkbox" data-mid="${n.id}" ${boundSet.has(Number(n.id))?'checked':''} />
-        ${escapeHtml(n.menu_name)} <span class="tag">${n.type}</span>${n.permission?`<span class="tag blue">${escapeHtml(n.permission)}</span>`:''}</label>
-      ${n.children&&n.children.length?`<div class="tree-children">${renderTree(n.children)}</div>`:''}
+      <label><input type="checkbox" data-mid="${n.id}" ${boundSet.has(Number(n.id)) ? 'checked' : ''} />
+        ${escapeHtml(n.menu_name)} <span class="tag">${n.type}</span>${n.permission ? `<span class="tag blue">${escapeHtml(n.permission)}</span>` : ''}</label>
+      ${n.children && n.children.length ? `<div class="tree-children">${renderTree(n.children)}</div>` : ''}
     </div>`).join('');
-  showModal(`<h4>分配菜单：${escapeHtml(roleName)}</h4>
+      showModal(`<h4>分配菜单：${escapeHtml(roleName)}</h4>
     <div class="tree" id="menuTree">${renderTree(tree)}</div>
     <div class="actions">
       <button class="btn secondary" onclick="closeModal()">取消</button>
       <button class="btn" onclick="saveAssignMenu(${roleId})">保存</button>
     </div>`);
-}
-function buildMenuTreeForUI(rows) {
-  const map = new Map();
-  rows.forEach(r => map.set(Number(r.id), { ...r, id: Number(r.id), parent_id: Number(r.parent_id), children: [] }));
-  const roots = [];
-  map.forEach(n => { if (n.parent_id && map.has(n.parent_id)) map.get(n.parent_id).children.push(n); else roots.push(n); });
-  return roots;
-}
-async function saveAssignMenu(roleId) {
-  const ids = [...document.querySelectorAll('#menuTree input[type=checkbox]')]
-    .filter(x=>x.checked).map(x=>Number(x.dataset.mid));
-  await api(`/sys/roles/${roleId}/menus`, { method:'PUT', body: JSON.stringify({ menuIds: ids }) });
-  toast('已保存','success'); closeModal();
-}
+    }
+    function buildMenuTreeForUI(rows) {
+      const map = new Map();
+      rows.forEach(r => map.set(Number(r.id), { ...r, id: Number(r.id), parent_id: Number(r.parent_id), children: [] }));
+      const roots = [];
+      map.forEach(n => { if (n.parent_id && map.has(n.parent_id)) map.get(n.parent_id).children.push(n); else roots.push(n); });
+      return roots;
+    }
+    async function saveAssignMenu(roleId) {
+      const ids = [...document.querySelectorAll('#menuTree input[type=checkbox]')]
+        .filter(x => x.checked).map(x => Number(x.dataset.mid));
+      await api(`/sys/roles/${roleId}/menus`, { method: 'PUT', body: JSON.stringify({ menuIds: ids }) });
+      toast('已保存', 'success'); closeModal();
+    }
 
-/* ===================== 菜单管理 ===================== */
-async function viewMenu() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 菜单管理 ===================== */
+    async function viewMenu() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>菜单管理</h3>
     <div class="form-row"><button class="btn" onclick="editMenu()">新增菜单</button></div>
     <div id="menuMgrTable"></div></div>`;
-  loadMenus();
-}
-async function loadMenus() {
-  const list = await api('/sys/menus');
-  const tree = buildMenuTreeForUI(list);
-  const flat = [];
-  const walk = (arr, depth) => arr.forEach(n => { flat.push({ ...n, _depth: depth }); if (n.children) walk(n.children, depth+1); });
-  walk(tree, 0);
-  document.getElementById('menuMgrTable').innerHTML = `<table><thead>
+      loadMenus();
+    }
+    async function loadMenus() {
+      const list = await api('/sys/menus');
+      const tree = buildMenuTreeForUI(list);
+      const flat = [];
+      const walk = (arr, depth) => arr.forEach(n => { flat.push({ ...n, _depth: depth }); if (n.children) walk(n.children, depth + 1); });
+      walk(tree, 0);
+      document.getElementById('menuMgrTable').innerHTML = `<table><thead>
     <tr><th>名称</th><th>类型</th><th>路径</th><th>权限码</th><th>排序</th><th>操作</th></tr></thead>
-    <tbody>${flat.map(m=>`<tr>
+    <tbody>${flat.map(m => `<tr>
       <td>${'　'.repeat(m._depth)}${escapeHtml(m.menu_name)}</td>
       <td><span class="tag">${m.type}</span></td>
-      <td>${escapeHtml(m.path||'')}</td>
-      <td><span class="tag blue">${escapeHtml(m.permission||'')}</span></td>
-      <td>${m.sort||0}</td>
+      <td>${escapeHtml(m.path || '')}</td>
+      <td><span class="tag blue">${escapeHtml(m.permission || '')}</span></td>
+      <td>${m.sort || 0}</td>
       <td>
-        <button class="btn sm secondary" onclick='editMenu(${JSON.stringify({...m,children:undefined,_depth:undefined})})'>编辑</button>
+        <button class="btn sm secondary" onclick='editMenu(${JSON.stringify({ ...m, children: undefined, _depth: undefined })})'>编辑</button>
         <button class="btn sm danger" onclick="delMenu(${m.id})">删除</button>
       </td></tr>`).join('')}</tbody></table>`;
-}
-function editMenu(m) {
-  m = m || {};
-  showModal(`<h4>${m.id?'编辑':'新增'}菜单</h4>
-    <div class="form-row"><label>父级ID</label><input id="m_parent" type="number" value="${m.parent_id||0}" /></div>
-    <div class="form-row"><label>名称</label><input id="m_name" value="${escapeHtml(m.menu_name||'')}" /></div>
+    }
+    function editMenu(m) {
+      m = m || {};
+      showModal(`<h4>${m.id ? '编辑' : '新增'}菜单</h4>
+    <div class="form-row"><label>父级ID</label><input id="m_parent" type="number" value="${m.parent_id || 0}" /></div>
+    <div class="form-row"><label>名称</label><input id="m_name" value="${escapeHtml(m.menu_name || '')}" /></div>
     <div class="form-row"><label>类型</label><select id="m_type">
-      <option value="menu" ${m.type==='menu'?'selected':''}>菜单</option>
-      <option value="dir" ${m.type==='dir'?'selected':''}>目录</option>
-      <option value="button" ${m.type==='button'?'selected':''}>按钮</option></select></div>
-    <div class="form-row"><label>路径</label><input id="m_path" value="${escapeHtml(m.path||'')}" /></div>
-    <div class="form-row"><label>图标</label><input id="m_icon" value="${escapeHtml(m.icon||'')}" /></div>
-    <div class="form-row"><label>权限码</label><input id="m_perm" value="${escapeHtml(m.permission||'')}" /></div>
-    <div class="form-row"><label>排序</label><input id="m_sort" type="number" value="${m.sort||0}" /></div>
+      <option value="menu" ${m.type === 'menu' ? 'selected' : ''}>菜单</option>
+      <option value="dir" ${m.type === 'dir' ? 'selected' : ''}>目录</option>
+      <option value="button" ${m.type === 'button' ? 'selected' : ''}>按钮</option></select></div>
+    <div class="form-row"><label>路径</label><input id="m_path" value="${escapeHtml(m.path || '')}" /></div>
+    <div class="form-row"><label>图标</label><input id="m_icon" value="${escapeHtml(m.icon || '')}" /></div>
+    <div class="form-row"><label>权限码</label><input id="m_perm" value="${escapeHtml(m.permission || '')}" /></div>
+    <div class="form-row"><label>排序</label><input id="m_sort" type="number" value="${m.sort || 0}" /></div>
     <div class="form-row"><label>状态</label><select id="m_status">
-      <option value="enable" ${m.status!=='disable'?'selected':''}>启用</option>
-      <option value="disable" ${m.status==='disable'?'selected':''}>禁用</option></select></div>
+      <option value="enable" ${m.status !== 'disable' ? 'selected' : ''}>启用</option>
+      <option value="disable" ${m.status === 'disable' ? 'selected' : ''}>禁用</option></select></div>
     <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
-    <button class="btn" onclick="saveMenu(${m.id||0})">保存</button></div>`);
-}
-async function saveMenu(id) {
-  const body = {
-    parent_id: Number(document.getElementById('m_parent').value)||0,
-    menu_name: document.getElementById('m_name').value.trim(),
-    type: document.getElementById('m_type').value,
-    path: document.getElementById('m_path').value || null,
-    icon: document.getElementById('m_icon').value || null,
-    permission: document.getElementById('m_perm').value || null,
-    sort: Number(document.getElementById('m_sort').value)||0,
-    status: document.getElementById('m_status').value,
-  };
-  if (!body.menu_name) return toast('名称必填','error');
-  if (id) await api('/sys/menus/'+id,{method:'PUT',body:JSON.stringify(body)});
-  else await api('/sys/menus',{method:'POST',body:JSON.stringify(body)});
-  toast('已保存','success'); closeModal(); loadMenus();
-}
-async function delMenu(id) {
-  if (!confirm('确定删除？')) return;
-  await api('/sys/menus/'+id,{method:'DELETE'});
-  toast('已删除','success'); loadMenus();
-}
+    <button class="btn" onclick="saveMenu(${m.id || 0})">保存</button></div>`);
+    }
+    async function saveMenu(id) {
+      const body = {
+        parent_id: Number(document.getElementById('m_parent').value) || 0,
+        menu_name: document.getElementById('m_name').value.trim(),
+        type: document.getElementById('m_type').value,
+        path: document.getElementById('m_path').value || null,
+        icon: document.getElementById('m_icon').value || null,
+        permission: document.getElementById('m_perm').value || null,
+        sort: Number(document.getElementById('m_sort').value) || 0,
+        status: document.getElementById('m_status').value,
+      };
+      if (!body.menu_name) return toast('名称必填', 'error');
+      if (id) await api('/sys/menus/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else await api('/sys/menus', { method: 'POST', body: JSON.stringify(body) });
+      toast('已保存', 'success'); closeModal(); loadMenus();
+    }
+    async function delMenu(id) {
+      if (!confirm('确定删除？')) return;
+      await api('/sys/menus/' + id, { method: 'DELETE' });
+      toast('已删除', 'success'); loadMenus();
+    }
 
-/* ===================== 操作日志 ===================== */
-async function viewLog() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 操作日志 ===================== */
+    async function viewLog() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>操作日志</h3>
     <div class="form-row">
       <input id="lUser" placeholder="用户名" />
@@ -670,88 +1024,211 @@ async function viewLog() {
       <button class="btn" onclick="loadLogs(1)">查询</button>
     </div>
     <div id="logTable"></div><div class="pager" id="logPager"></div></div>`;
-  loadLogs(1);
-}
-let _logPage = 1;
-async function loadLogs(page) {
-  if (page) _logPage = page;
-  const qs = new URLSearchParams({ page: _logPage, pageSize: 20 });
-  ['lUser','lModule','lStart','lEnd'].forEach(id => {
-    const v = document.getElementById(id).value.trim();
-    if (v) qs.set({lUser:'username',lModule:'module',lStart:'startDate',lEnd:'endDate'}[id], v);
-  });
-  const data = await api('/sys/logs?' + qs);
-  document.getElementById('logTable').innerHTML = `<table><thead>
+      loadLogs(1);
+    }
+    let _logPage = 1;
+    async function loadLogs(page) {
+      if (page) _logPage = page;
+      const qs = new URLSearchParams({ page: _logPage, pageSize: 20 });
+      ['lUser', 'lModule', 'lStart', 'lEnd'].forEach(id => {
+        const v = document.getElementById(id).value.trim();
+        if (v) qs.set({ lUser: 'username', lModule: 'module', lStart: 'startDate', lEnd: 'endDate' }[id], v);
+      });
+      const data = await api('/sys/logs?' + qs);
+      document.getElementById('logTable').innerHTML = `<table><thead>
     <tr><th>ID</th><th>用户</th><th>模块</th><th>操作内容</th><th>IP</th><th>时间</th></tr></thead>
-    <tbody>${(data.data||[]).map(l=>`<tr>
-      <td>${l.id}</td><td>${escapeHtml(l.username||'-')}</td>
-      <td><span class="tag">${escapeHtml(l.module||'')}</span></td>
-      <td>${escapeHtml(l.content||'')}</td><td>${escapeHtml(l.ip||'-')}</td>
+    <tbody>${(data.data || []).map(l => `<tr>
+      <td>${l.id}</td><td>${escapeHtml(l.username || '-')}</td>
+      <td><span class="tag">${escapeHtml(l.module || '')}</span></td>
+      <td>${escapeHtml(l.content || '')}</td><td>${escapeHtml(l.ip || '-')}</td>
       <td>${fmtTime(l.created_at)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">暂无</td></tr>'}</tbody></table>`;
-  document.getElementById('logPager').innerHTML = pagerHtml(data, 'loadLogs');
-}
+      document.getElementById('logPager').innerHTML = pagerHtml(data, 'loadLogs');
+    }
 
-/* ===================== 食物分类 ===================== */
-async function viewFoodCategory() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 食物分类 ===================== */
+    async function viewFoodCategory() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>食物分类管理</h3>
     <div id="catTable"></div></div>`;
-  const list = await api('/sys/food-categories');
-  document.getElementById('catTable').innerHTML = `<table><thead>
+      const list = await api('/sys/food-categories');
+      document.getElementById('catTable').innerHTML = `<table><thead>
     <tr><th>分类</th><th>食物数</th><th>操作</th></tr></thead>
-    <tbody>${(list||[]).map(c=>`<tr>
+    <tbody>${(list || []).map(c => `<tr>
       <td>${escapeHtml(c.name)}</td><td>${c.food_count}</td>
       <td><button class="btn sm secondary" onclick="renameCat('${escapeHtml(c.name)}')">重命名</button></td>
     </tr>`).join('') || '<tr><td colspan="3" class="empty">暂无</td></tr>'}</tbody></table>`;
-}
-async function renameCat(oldName) {
-  const newName = prompt('新分类名称：', oldName);
-  if (!newName || newName === oldName) return;
-  await api('/sys/food-categories/rename', { method:'PUT', body: JSON.stringify({ oldName, newName }) });
-  toast('已重命名','success'); viewFoodCategory();
-}
+    }
+    async function renameCat(oldName) {
+      const newName = prompt('新分类名称：', oldName);
+      if (!newName || newName === oldName) return;
+      await api('/sys/food-categories/rename', { method: 'PUT', body: JSON.stringify({ oldName, newName }) });
+      toast('已重命名', 'success'); viewFoodCategory();
+    }
 
-/* ===================== 系统参数 ===================== */
-async function viewParam() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 系统参数 ===================== */
+    async function viewParam() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>系统参数配置</h3>
     <div id="paramTable"></div></div>`;
-  const list = await api('/sys/params');
-  document.getElementById('paramTable').innerHTML = `<table><thead>
+      const list = await api('/sys/params');
+      document.getElementById('paramTable').innerHTML = `<table><thead>
     <tr><th>键</th><th>值</th><th>说明</th><th>更新时间</th><th>操作</th></tr></thead>
-    <tbody>${(list||[]).map(p=>`<tr>
+    <tbody>${(list || []).map(p => `<tr>
       <td><code>${escapeHtml(p.param_key)}</code></td>
-      <td>${escapeHtml(p.param_value||'')}</td>
-      <td>${escapeHtml(p.remark||'')}</td>
+      <td>${escapeHtml(p.param_value || '')}</td>
+      <td>${escapeHtml(p.remark || '')}</td>
       <td>${fmtTime(p.updated_at)}</td>
-      <td><button class="btn sm secondary" onclick="editParam('${escapeHtml(p.param_key)}','${escapeHtml(p.param_value||'')}','${escapeHtml(p.remark||'')}')">编辑</button></td>
+      <td><button class="btn sm secondary" onclick="editParam('${escapeHtml(p.param_key)}','${escapeHtml(p.param_value || '')}','${escapeHtml(p.remark || '')}')">编辑</button></td>
     </tr>`).join('')}</tbody></table>`;
-}
-function editParam(key, val, remark) {
-  showModal(`<h4>编辑参数：${escapeHtml(key)}</h4>
+    }
+    function editParam(key, val, remark) {
+      showModal(`<h4>编辑参数：${escapeHtml(key)}</h4>
     <div class="form-row"><label>值</label><input id="p_val" value="${escapeHtml(val)}" /></div>
     <div class="form-row"><label>说明</label><input id="p_remark" value="${escapeHtml(remark)}" /></div>
     <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
     <button class="btn" onclick="saveParam('${key}')">保存</button></div>`);
-}
-async function saveParam(key) {
-  await api('/sys/params/'+encodeURIComponent(key), { method:'PUT', body: JSON.stringify({
-    param_value: document.getElementById('p_val').value,
-    remark: document.getElementById('p_remark').value,
-  })});
-  toast('已保存','success'); closeModal(); viewParam();
-}
+    }
+    async function saveParam(key) {
+      await api('/sys/params/' + encodeURIComponent(key), {
+        method: 'PUT', body: JSON.stringify({
+          param_value: document.getElementById('p_val').value,
+          remark: document.getElementById('p_remark').value,
+        })
+      });
+      toast('已保存', 'success'); closeModal(); viewParam();
+    }
 
-/* ===================== 数据备份恢复 ===================== */
-function viewBackup() {
-  document.getElementById('content').innerHTML = `<div class="panel">
+    /* ===================== 数据备份恢复 ===================== */
+    function backupSummaryHtml(summary, valueLabel = '记录数') {
+      const rows = Object.entries(summary || {});
+      if (!rows.length) return '<div class="empty">暂无执行记录</div>';
+      return `<table><thead><tr><th>表名</th><th>${valueLabel}</th></tr></thead><tbody>${rows.map(([table, count]) => `
+    <tr><td>${escapeHtml(table)}</td><td>${count}</td></tr>
+  `).join('')}</tbody></table>`;
+    }
+
+    function renderBackupResult(title, summary, valueLabel = '记录数') {
+      document.getElementById('backupResult').innerHTML = `<h3>${escapeHtml(title)}</h3>${backupSummaryHtml(summary, valueLabel)}`;
+    }
+
+    async function loadBackupSummary() {
+      const box = document.getElementById('backupCurrentSummary');
+      if (!box) return;
+      box.innerHTML = '<div class="empty">加载中...</div>';
+      try {
+        const summary = await api('/sys/backup/summary');
+        box.innerHTML = `
+          <div class="form-row">
+            <span class="tag blue">表数：${summary.tableCount ?? 0}</span>
+            <span class="tag green">总记录数：${summary.totalRecords ?? 0}</span>
+            <span class="tag">生成时间：${fmtTime(summary.generatedAt)}</span>
+          </div>
+          ${backupSummaryHtml((summary && summary.counts) || {})}
+        `;
+      } catch {
+        box.innerHTML = '<div class="empty">当前数据摘要加载失败</div>';
+      }
+    }
+
+    async function downloadBackup() {
+      const btn = document.getElementById('backupExportBtn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '导出中...';
+      try {
+        const res = await fetch(API + '/sys/backup/export', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+        if (res.status === 401) { localStorage.removeItem(TOKEN_KEY); location.href = '/index.html'; return; }
+
+        const text = await res.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch { }
+
+        if (!res.ok) {
+          const msg = (data && data.message) || ('请求失败 ' + res.status);
+          toast(msg, 'error');
+          throw new Error(msg);
+        }
+
+        const disposition = res.headers.get('content-disposition') || '';
+        const match = disposition.match(/filename="?([^";]+)"?/i);
+        const filename = match ? match[1] : `shiyuji-backup-${Date.now()}.json`;
+        const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+
+        renderBackupResult('最近导出摘要', (data && data.counts) || {});
+        toast('备份已下载', 'success');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    async function restoreBackup() {
+      const input = document.getElementById('backupFile');
+      const file = input.files && input.files[0];
+      if (!file) return toast('请先选择备份文件', 'error');
+      if (!confirm('恢复会覆盖当前数据库数据，是否继续？')) return;
+
+      const btn = document.getElementById('backupRestoreBtn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '恢复中...';
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        const result = await api('/sys/backup/restore', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        renderBackupResult('最近恢复摘要', (result && result.restored) || {}, '已恢复行数');
+        toast('备份恢复完成', 'success');
+        input.value = '';
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          toast('备份文件不是有效的 JSON', 'error');
+          return;
+        }
+        throw error;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    function viewBackup() {
+      document.getElementById('content').innerHTML = `<div class="panel">
     <h3>数据备份恢复</h3>
-    <p>建议在数据库服务器使用 <code>pg_dump</code> 进行备份；恢复使用 <code>pg_restore</code>。</p>
-    <p>当前接口暂未开放在线备份，请联系运维操作。</p>
+    <p>在线备份会导出当前业务表的 JSON 快照；在线恢复会覆盖现有数据，请谨慎操作。</p>
+    <div class="form-row">
+      <button class="btn" id="backupExportBtn" onclick="downloadBackup()">下载当前备份</button>
+      <button class="btn secondary" onclick="loadBackupSummary()">刷新当前摘要</button>
+    </div>
+    <div class="form-row">
+      <input id="backupFile" type="file" accept="application/json,.json" />
+      <button class="btn danger" id="backupRestoreBtn" onclick="restoreBackup()">恢复所选备份</button>
+    </div>
+    <p>建议保留数据库级 <code>pg_dump</code> 备份作为最终兜底；在线恢复更适合当前项目的快速迁移与回滚。</p>
+  </div>
+  <div class="panel">
+    <h3>当前数据摘要</h3>
+    <div id="backupCurrentSummary"><div class="empty">加载中...</div></div>
+  </div>
+  <div class="panel" id="backupResult">
+    <h3>执行摘要</h3>
+    <div class="empty">还没有执行在线备份或恢复</div>
   </div>`;
-}
+      loadBackupSummary();
+    }
 
-boot();
-</script>
+    boot();
+  </script>
 </body>
+
 </html>
