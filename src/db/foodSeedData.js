@@ -1,0 +1,22 @@
+export const seedFoodData = [
+  { name: '鸡胸肉', category: '蛋白质', calories: 133 },
+  { name: '三文鱼', category: '蛋白质', calories: 208 },
+  { name: '鸡蛋', category: '蛋白质', calories: 155 },
+  { name: '糙米饭', category: '主食', calories: 116 },
+  { name: '燕麦', category: '主食', calories: 389 },
+  { name: '红薯', category: '主食', calories: 86 },
+  { name: '西兰花', category: '蔬菜', calories: 34 },
+  { name: '番茄', category: '蔬菜', calories: 18 },
+  { name: '黄瓜', category: '蔬菜', calories: 16 },
+  { name: '牛油果', category: '水果', calories: 160 },
+  { name: '苹果', category: '水果', calories: 52 },
+  { name: '香蕉', category: '水果', calories: 89 },
+  { name: '杏仁', category: '坚果', calories: 579 },
+  { name: '核桃', category: '坚果', calories: 654 },
+  { name: '酸奶（无糖）', category: '乳制品', calories: 62 },
+  { name: '全脂牛奶', category: '乳制品', calories: 64 },
+  { name: '豆腐', category: '豆制品', calories: 76 },
+  { name: '毛豆', category: '豆制品', calories: 122 },
+  { name: '橄榄油', category: '调味', calories: 884 },
+  { name: '花生酱', category: '调味', calories: 588 }
+];

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>食愈记 · 管理后台</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 48px 44px 44px;
+      width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo .icon {
+      font-size: 48px;
+      line-height: 1;
+    }
+    .logo h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2d3748;
+      margin-top: 8px;
+    }
+    .logo p {
+      font-size: 13px;
+      color: #a0aec0;
+      margin-top: 4px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      color: #4a5568;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #2d3748;
+      outline: none;
+      transition: border-color .2s;
+      background: #f7fafc;
+    }
+    input:focus { border-color: #667eea; background: #fff; }
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover { opacity: .92; }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .error {
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+      color: #c53030;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .error.show { display: block; }
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: #cbd5e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="icon">🥗</div>
+      <h1>食愈记管理后台</h1>
+      <p>FoodHealer Admin Dashboard</p>
+    </div>
+    <div class="error" id="errMsg"></div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="username">管理员账号</label>
+        <input id="username" type="text" placeholder="请输入用户名" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label for="password">登录密码</label>
+        <input id="password" type="password" placeholder="请输入密码" autocomplete="current-password" required />
+      </div>
+      <button class="btn" type="submit" id="submitBtn">登 录</button>
+    </form>
+    <div class="footer">食愈记 © 2025 · 管理系统</div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const errMsg = document.getElementById('errMsg');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // 已登录自动跳转
+    if (localStorage.getItem('sy_admin_token')) {
+      window.location.href = '/admin.html';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errMsg.classList.remove('show');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '登录中...';
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/auth/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || '登录失败');
+        }
+
+        localStorage.setItem('sy_admin_token', data.token);
+        localStorage.setItem('sy_admin_info', JSON.stringify(data.admin));
+        window.location.href = '/admin.html';
+      } catch (err) {
+        errMsg.textContent = err.message;
+        errMsg.classList.add('show');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '登 录';
+      }
+    });
+  </script>
+</body>
+</html>
