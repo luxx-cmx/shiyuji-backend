@@ -309,6 +309,85 @@
       margin-top: 4px;
     }
 
+    .stat-card .sub {
+      margin-top: 8px;
+      font-size: 12px;
+      opacity: .9;
+    }
+
+    .mini-chart-wrap {
+      margin-bottom: 18px;
+    }
+    .mini-chart-wrap h4 {
+      font-size: 13px;
+      color: #64748b;
+      margin: 12px 0 4px;
+      font-weight: 500;
+    }
+    .mini-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 110px;
+      padding: 10px 4px 0;
+      border-bottom: 2px solid #e2e8f0;
+      position: relative;
+    }
+
+    .mini-chart .bar {
+      flex: 1;
+      min-width: 4px;
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(180deg, #818cf8, #4f46e5);
+      position: relative;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .mini-chart .bar:hover { opacity: .75; }
+
+    .mini-chart .bar.food {
+      background: linear-gradient(180deg, #34d399, #059669);
+    }
+
+    .mini-chart-labels {
+      display: flex;
+      gap: 3px;
+      padding: 3px 4px 0;
+      overflow: hidden;
+    }
+    .mini-chart-labels .lbl {
+      flex: 1;
+      font-size: 9px;
+      color: #94a3b8;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+    }
+    .mini-chart-labels .lbl.show {
+      color: #64748b;
+      font-size: 10px;
+    }
+
+    .warning-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .warning-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+    }
+
+    .warning-item.danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+
     /* modal */
     .modal-mask {
       position: fixed;
@@ -384,6 +463,104 @@
 
     .tree-children {
       padding-left: 20px;
+    }
+
+    /* tree-select */
+    .tree-select {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .tree-select-trigger {
+      width: 100%;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      color: #1f2937;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .tree-select-trigger:hover,
+    .tree-select.open .tree-select-trigger {
+      border-color: #6366f1;
+    }
+
+    .tree-select-dropdown {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 120;
+      max-height: 280px;
+      overflow: auto;
+      padding: 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .14);
+    }
+
+    .tree-select.open .tree-select-dropdown {
+      display: block;
+    }
+
+    .tree-select-row {
+      display: flex;
+      align-items: center;
+      min-height: 28px;
+      padding-left: calc(var(--depth, 0) * 18px);
+    }
+
+    .tree-select-expand {
+      width: 22px;
+      height: 24px;
+      border: 0;
+      background: transparent;
+      color: #64748b;
+      font-size: 11px;
+      padding: 0;
+    }
+
+    .tree-select-expand.placeholder {
+      visibility: hidden;
+    }
+
+    .tree-select-option {
+      flex: 1;
+      padding: 5px 8px;
+      border-radius: 5px;
+      color: #334155;
+      cursor: pointer;
+    }
+
+    .tree-select-option:hover {
+      background: #eef2ff;
+      color: #4f46e5;
+    }
+
+    .tree-select-option.selected {
+      background: #e0e7ff;
+      color: #3730a3;
+      font-weight: 600;
+    }
+
+    .tree-select-option.disabled {
+      color: #94a3b8;
+      cursor: not-allowed;
+      background: transparent;
+    }
+
+    .tree-select-branch.collapsed {
+      display: none;
     }
 
     .empty {
@@ -511,6 +688,17 @@
       return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
     function fmtTime(t) { if (!t) return '-'; return new Date(t).toLocaleString('zh-CN', { hour12: false }); }
+    function prettyJson(value) { return JSON.stringify(value ?? {}, null, 2); }
+    function ratioText(value) { const n = Number(value || 0); return `${n >= 0 ? '+' : ''}${n}%`; }
+    function layerTag(layer, label) {
+      const cls = layer === 'high_value' ? 'blue' : layer === 'active' ? 'green' : layer === 'lost' ? 'red' : '';
+      return `<span class="tag ${cls}">${escapeHtml(label || layer || '-')}</span>`;
+    }
+    function auditTag(status) {
+      const map = { pending: ['待审核', 'blue'], approved: ['已通过', 'green'], rejected: ['已驳回', 'red'] };
+      const item = map[status] || [status || 'approved', 'green'];
+      return `<span class="tag ${item[1]}">${item[0]}</span>`;
+    }
 
     /* ===================== 模态框 ===================== */
     function showModal(html) {
@@ -601,6 +789,7 @@
       '/permission/dept': viewDept,
       '/permission/role': viewRole,
       '/permission/menu': viewMenu,
+      '/permission/sysUser': viewSysUser,
       '/permission/log': viewLog,
       '/system': viewFoodCategory,
       '/system/foodCategory': viewFoodCategory,
@@ -612,20 +801,43 @@
     async function viewDashboard() {
       const c = document.getElementById('content');
       c.innerHTML = `<div class="panel"><div id="dashStats" class="stat-grid"><div class="empty">加载中...</div></div></div>
+    <div class="panel"><h3>运营预警</h3><div id="dashWarnings"><div class="empty">加载中...</div></div></div>
+    <div class="panel"><h3>近 30 天增长趋势</h3><div id="dashTrend"><div class="empty">加载中...</div></div></div>
     <div class="panel"><h3>更新记录</h3><div id="dashUpdates"></div></div>`;
       try {
-        const stats = await api('/dashboard/stats');
+        const [stats, ops] = await Promise.all([api('/dashboard/stats'), api('/dashboard/operations')]);
         const cards = [
           { label: '总用户数', value: stats.totalUsers ?? '-' },
-          { label: '今日新增用户', value: stats.todayNewUsers ?? '-' },
+          { label: '今日新增用户', value: stats.todayNewUsers ?? '-', sub: `环比 ${ratioText(ops.metrics?.todayUsers?.dayRatio)} · 近7日 ${ratioText(ops.metrics?.todayUsers?.weekRatio)}` },
           { label: '食物总数', value: stats.totalFoods ?? '-' },
-          { label: '今日新增食物', value: stats.todayNewFoods ?? '-' },
+          { label: '今日新增食物', value: stats.todayNewFoods ?? '-', sub: `环比 ${ratioText(ops.metrics?.todayFoods?.dayRatio)} · 近7日 ${ratioText(ops.metrics?.todayFoods?.weekRatio)}` },
           { label: '今日饮食记录', value: stats.todayDietRecords ?? '-' },
           { label: '活跃用户', value: stats.activeUsers ?? '-' },
+          { label: '30天流失率', value: `${ops.metrics?.inactiveRate?.value ?? 0}%`, sub: `流失 ${ops.metrics?.inactiveRate?.inactiveUsers ?? 0} / ${ops.metrics?.inactiveRate?.totalUsers ?? 0}` },
         ];
         document.getElementById('dashStats').innerHTML = cards.map(x => `
-      <div class="stat-card"><div class="label">${x.label}</div><div class="value">${x.value}</div></div>
+      <div class="stat-card"><div class="label">${x.label}</div><div class="value">${x.value}</div>${x.sub ? `<div class="sub">${escapeHtml(x.sub)}</div>` : ''}</div>
     `).join('');
+        document.getElementById('dashWarnings').innerHTML = (ops.warnings || []).length
+          ? `<div class="warning-list">${ops.warnings.map(w => `<div class="warning-item ${w.level === 'danger' ? 'danger' : ''}"><strong>${escapeHtml(w.title)}</strong><br>${escapeHtml(w.message)}</div>`).join('')}</div>`
+          : '<div class="empty">暂无异常预警</div>';
+      } catch { }
+      try {
+        const trend = await api('/dashboard/trends');
+        const maxUsers = Math.max(1, ...trend.data.map(x => Number(x.new_users || 0)));
+        const maxFoods = Math.max(1, ...trend.data.map(x => Number(x.new_foods || 0)));
+        const mkLabels = (arr) => arr.map((x, i) => `<div class="lbl ${i % 5 === 0 ? 'show' : ''}">${i % 5 === 0 ? escapeHtml((x.bucket||'').slice(5)||x.bucket||'') : ''}</div>`).join('');
+        document.getElementById('dashTrend').innerHTML = `<div class="form-row" style="margin-bottom:4px"><span class="tag blue">用户新增</span><span class="tag green">食物新增</span></div>
+          <div class="mini-chart-wrap">
+            <h4>用户新增</h4>
+            <div class="mini-chart">${trend.data.map(x => `<div class="bar" title="${escapeHtml(x.bucket)}：${x.new_users}" style="height:${Math.max(3, Number(x.new_users || 0) / maxUsers * 110)}px"></div>`).join('')}</div>
+            <div class="mini-chart-labels">${mkLabels(trend.data)}</div>
+          </div>
+          <div class="mini-chart-wrap">
+            <h4>食物新增</h4>
+            <div class="mini-chart">${trend.data.map(x => `<div class="bar food" title="${escapeHtml(x.bucket)}：${x.new_foods}" style="height:${Math.max(3, Number(x.new_foods || 0) / maxFoods * 110)}px"></div>`).join('')}</div>
+            <div class="mini-chart-labels">${mkLabels(trend.data)}</div>
+          </div>`;
       } catch { }
       try {
         const updates = await api('/dashboard/app-updates');
@@ -646,12 +858,17 @@
     <div class="form-row">
       <input id="uKw" placeholder="搜索用户名/昵称" />
       <select id="uStatus"><option value="">全部状态</option><option value="active">正常</option><option value="disabled">禁用</option></select>
+      <select id="uLayer"><option value="">全部分层</option><option value="high_value">高价值</option><option value="active">活跃</option><option value="sleeping">沉睡</option><option value="lost">流失</option></select>
+      <label><input id="uLostOnly" type="checkbox" /> 仅流失预警</label>
       <button class="btn" onclick="loadUsers()">查询</button>
       ${hasPerm('user:add') ? '<button class="btn secondary" onclick="editUser()">新增</button>' : ''}
+      ${hasPerm('user:loss') ? '<button class="btn secondary" onclick="exportLossUsers()">导出流失用户</button>' : ''}
     </div>
+    <div id="userLayerBox" class="form-row"></div>
     <div id="userTable"></div>
     <div class="pager" id="userPager"></div>
   </div>`;
+      loadUserLayers();
       loadUsers();
     }
     let _userPage = 1;
@@ -659,25 +876,56 @@
       if (page) _userPage = page;
       const kw = document.getElementById('uKw').value.trim();
       const status = document.getElementById('uStatus').value;
+      const layer = document.getElementById('uLayer').value;
+      const lostOnly = document.getElementById('uLostOnly').checked;
       const qs = new URLSearchParams({ page: _userPage, pageSize: 15 });
       if (kw) qs.set('keyword', kw);
       if (status) qs.set('status', status);
+      if (layer) qs.set('layer', layer);
+      if (lostOnly) qs.set('lostOnly', 'true');
       const data = await api('/users?' + qs);
       const rows = data.data || [];
       document.getElementById('userTable').innerHTML = `
     <table><thead><tr>
-      <th>ID</th><th>用户名</th><th>昵称</th><th>性别</th><th>身高</th><th>状态</th><th>注册时间</th><th>操作</th>
+      <th>ID</th><th>用户名</th><th>昵称</th><th>分层</th><th>最近活跃</th><th>状态</th><th>注册时间</th><th>操作</th>
     </tr></thead><tbody>${rows.map(u => `<tr>
       <td>${u.id}</td><td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.nickname || '')}</td>
-      <td>${escapeHtml(u.gender || '-')}</td><td>${u.height || '-'}</td>
+      <td>${layerTag(u.user_layer, u.user_layer_label)}</td><td>${fmtTime(u.last_active_at)}</td>
       <td><span class="tag ${u.status === 'active' ? 'green' : 'red'}">${u.status || 'active'}</span></td>
       <td>${fmtTime(u.created_at)}</td>
       <td>
+        ${hasPerm('user:detail') ? `<button class="btn sm" onclick="showUserDetail(${u.id})">详情</button>` : ''}
         ${hasPerm('user:edit') ? `<button class="btn sm secondary" onclick='editUser(${JSON.stringify(u)})'>编辑</button>` : ''}
         ${hasPerm('user:delete') ? `<button class="btn sm danger" onclick="delUser(${u.id})">删除</button>` : ''}
       </td>
     </tr>`).join('') || '<tr><td colspan="8" class="empty">暂无数据</td></tr>'}</tbody></table>`;
       document.getElementById('userPager').innerHTML = pagerHtml(data, 'loadUsers');
+    }
+    async function loadUserLayers() {
+      if (!hasPerm('user:layer')) return;
+      try {
+        const rows = await api('/users/layers');
+        document.getElementById('userLayerBox').innerHTML = rows.map(x => `${layerTag(x.user_layer, x.user_layer_label)} <span>${x.count}</span>`).join(' ');
+      } catch { }
+    }
+    async function showUserDetail(id) {
+      const data = await api('/users/' + id + '/detail');
+      const u = data.user || {};
+      showModal(`<h4>用户详情：${escapeHtml(u.nickname || u.username || id)}</h4>
+        <div class="form-row"><label>账号</label><input value="${escapeHtml(u.username || '')}" disabled /></div>
+        <div class="form-row"><label>分层</label><div>${layerTag(u.user_layer, u.user_layer_label)}</div></div>
+        <div class="form-row"><label>最近活跃</label><input value="${escapeHtml(fmtTime(u.last_active_at))}" disabled /></div>
+        <div class="form-row"><label>饮食统计</label><input value="记录 ${data.dietStats?.total_records || 0}，热量 ${data.dietStats?.total_calories || 0}" disabled /></div>
+        <div class="form-row"><label>运动统计</label><input value="记录 ${data.exerciseStats?.total_records || 0}，时长 ${data.exerciseStats?.total_duration || 0} 分钟" disabled /></div>
+        <div class="form-row"><label>体重趋势</label><textarea style="min-height:120px" readonly>${escapeHtml((data.weightTrend || []).map(w => `${w.date || fmtTime(w.created_at)}：${w.weight}kg`).join('\n') || '暂无')}</textarea></div>
+        <div class="actions"><button class="btn secondary" onclick="closeModal()">关闭</button></div>`);
+    }
+    async function exportLossUsers() {
+      const rows = await api('/users/loss-warning?limit=10000');
+      const csv = ['id,username,nickname,status,last_active_at,created_at', ...rows.map(u => [u.id, u.username, u.nickname || '', u.status || '', u.last_active_at || '', u.created_at || ''].map(x => String(x).replaceAll(',', '，')).join(','))].join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `loss-users-${Date.now()}.csv`; a.click(); URL.revokeObjectURL(url);
     }
     function pagerHtml(data, fn) {
       const totalPages = Math.max(1, Math.ceil((data.total || 0) / (data.pageSize || 10)));
@@ -735,6 +983,7 @@
     <div class="form-row">
       <input id="fKw" placeholder="搜索食物名" />
       <input id="fCat" placeholder="分类" />
+      <select id="fAudit"><option value="">全部审核</option><option value="pending">待审核</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select>
       <button class="btn" onclick="loadFoods()">查询</button>
       ${hasPerm('food:add') ? '<button class="btn secondary" onclick="editFood()">新增</button>' : ''}
     </div>
@@ -748,38 +997,71 @@
       const qs = new URLSearchParams({ page: _foodPage, pageSize: 15 });
       const kw = document.getElementById('fKw').value.trim(); if (kw) qs.set('keyword', kw);
       const cat = document.getElementById('fCat').value.trim(); if (cat) qs.set('category', cat);
+      const audit = document.getElementById('fAudit').value; if (audit) qs.set('auditStatus', audit);
       const data = await api('/foods?' + qs);
       const rows = data.data || [];
       document.getElementById('foodTable').innerHTML = `
-    <table><thead><tr><th>ID</th><th>名称</th><th>分类</th><th>热量(kcal)</th><th>创建时间</th><th>操作</th></tr></thead>
+    <table><thead><tr><th>ID</th><th>名称</th><th>分类</th><th>热量</th><th>营养(P/F/C)</th><th>审核</th><th>创建时间</th><th>操作</th></tr></thead>
     <tbody>${rows.map(f => `<tr>
       <td>${f.id}</td><td>${escapeHtml(f.name)}</td><td><span class="tag blue">${escapeHtml(f.category)}</span></td>
-      <td>${f.calories}</td><td>${fmtTime(f.created_at)}</td>
+      <td>${f.calories}</td><td>${f.protein || 0}/${f.fat || 0}/${f.carbohydrate || 0}</td><td>${auditTag(f.audit_status)}</td><td>${fmtTime(f.created_at)}</td>
       <td>
+        ${hasPerm('food:audit') && f.audit_status !== 'approved' ? `<button class="btn sm" onclick="auditFood(${f.id},'approved')">通过</button>` : ''}
+        ${hasPerm('food:audit') && f.audit_status !== 'rejected' ? `<button class="btn sm secondary" onclick="auditFood(${f.id},'rejected')">驳回</button>` : ''}
         ${hasPerm('food:edit') ? `<button class="btn sm secondary" onclick='editFood(${JSON.stringify(f)})'>编辑</button>` : ''}
         ${hasPerm('food:delete') ? `<button class="btn sm danger" onclick="delFood(${f.id})">删除</button>` : ''}
-      </td></tr>`).join('') || '<tr><td colspan="6" class="empty">暂无</td></tr>'}</tbody></table>`;
+      </td></tr>`).join('') || '<tr><td colspan="8" class="empty">暂无</td></tr>'}</tbody></table>`;
       document.getElementById('foodPager').innerHTML = pagerHtml(data, 'loadFoods');
     }
     function editFood(f) {
       f = f || {};
-      showModal(`<h4>${f.id ? '编辑' : '新增'}食物</h4>
+      api('/sys/food-categories').then(cats => {
+        const options = (cats || []).map(c =>
+          `<option value="${escapeHtml(c.name)}" ${f.category === c.name ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+        ).join('');
+        showModal(`<h4>${f.id ? '编辑' : '新增'}食物</h4>
     <div class="form-row"><label>名称</label><input id="ff_name" value="${escapeHtml(f.name || '')}" /></div>
-    <div class="form-row"><label>分类</label><input id="ff_category" value="${escapeHtml(f.category || '')}" /></div>
+    <div class="form-row"><label>分类</label><select id="ff_category">
+      <option value="">请选择分类</option>${options}
+    </select></div>
     <div class="form-row"><label>热量(kcal)</label><input id="ff_calories" type="number" value="${f.calories || ''}" /></div>
+    <div class="form-row"><label>蛋白质(g)</label><input id="ff_protein" type="number" value="${f.protein || 0}" /></div>
+    <div class="form-row"><label>脂肪(g)</label><input id="ff_fat" type="number" value="${f.fat || 0}" /></div>
+    <div class="form-row"><label>碳水(g)</label><input id="ff_carbohydrate" type="number" value="${f.carbohydrate || 0}" /></div>
+    <div class="form-row"><label>审核状态</label><select id="ff_audit"><option value="pending" ${f.audit_status === 'pending' ? 'selected' : ''}>待审核</option><option value="approved" ${f.audit_status !== 'pending' && f.audit_status !== 'rejected' ? 'selected' : ''}>已通过</option><option value="rejected" ${f.audit_status === 'rejected' ? 'selected' : ''}>已驳回</option></select></div>
     <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
     <button class="btn" onclick="saveFood(${f.id || 0})">保存</button></div>`);
+      }).catch(() => {
+        showModal(`<h4>${f.id ? '编辑' : '新增'}食物</h4>
+    <div class="form-row"><label>名称</label><input id="ff_name" value="${escapeHtml(f.name || '')}" /></div>
+    <div class="form-row"><label>分类</label><input id="ff_category" value="${escapeHtml(f.category || '')}" placeholder="请输入分类" /></div>
+    <div class="form-row"><label>热量(kcal)</label><input id="ff_calories" type="number" value="${f.calories || ''}" /></div>
+    <div class="form-row"><label>蛋白质(g)</label><input id="ff_protein" type="number" value="${f.protein || 0}" /></div>
+    <div class="form-row"><label>脂肪(g)</label><input id="ff_fat" type="number" value="${f.fat || 0}" /></div>
+    <div class="form-row"><label>碳水(g)</label><input id="ff_carbohydrate" type="number" value="${f.carbohydrate || 0}" /></div>
+    <div class="form-row"><label>审核状态</label><select id="ff_audit"><option value="pending" ${f.audit_status === 'pending' ? 'selected' : ''}>待审核</option><option value="approved" ${f.audit_status !== 'pending' && f.audit_status !== 'rejected' ? 'selected' : ''}>已通过</option><option value="rejected" ${f.audit_status === 'rejected' ? 'selected' : ''}>已驳回</option></select></div>
+    <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
+    <button class="btn" onclick="saveFood(${f.id || 0})">保存</button></div>`);
+      });
     }
     async function saveFood(id) {
       const body = {
         name: document.getElementById('ff_name').value.trim(),
         category: document.getElementById('ff_category').value.trim(),
         calories: Number(document.getElementById('ff_calories').value) || 0,
+        protein: Number(document.getElementById('ff_protein').value) || 0,
+        fat: Number(document.getElementById('ff_fat').value) || 0,
+        carbohydrate: Number(document.getElementById('ff_carbohydrate').value) || 0,
+        audit_status: document.getElementById('ff_audit').value,
       };
       if (!body.name || !body.category) return toast('名称与分类必填', 'error');
       if (id) await api('/foods/' + id, { method: 'PUT', body: JSON.stringify(body) });
       else await api('/foods', { method: 'POST', body: JSON.stringify(body) });
       toast('保存成功', 'success'); closeModal(); loadFoods();
+    }
+    async function auditFood(id, status) {
+      await api(`/foods/${id}/audit`, { method: 'POST', body: JSON.stringify({ audit_status: status }) });
+      toast('审核状态已更新', 'success'); loadFoods();
     }
     async function delFood(id) {
       if (!confirm('确定删除？')) return;
@@ -790,27 +1072,102 @@
     /* ===================== 食物统计 ===================== */
     async function viewFoodStat() {
       document.getElementById('content').innerHTML = `<div class="panel"><h3>食物分类统计</h3><div id="foodStatTable"></div></div>
-    <div class="panel"><h3>热门收藏 Top</h3><div id="foodHotTable"></div></div>`;
+    <div class="panel"><h3>营养成分分布</h3><div id="nutritionTable"></div></div>
+    <div class="panel"><h3>热门食物排行</h3><div id="foodHotTable"></div></div>`;
       try {
         const cats = await api('/analytics/food-categories');
         document.getElementById('foodStatTable').innerHTML = `<table><thead><tr><th>分类</th><th>数量</th></tr></thead>
       <tbody>${(cats || []).map(x => `<tr><td>${escapeHtml(x.category)}</td><td>${x.count}</td></tr>`).join('')}</tbody></table>`;
       } catch { }
       try {
+        const nutrition = await api('/analytics/foods/nutrition-distribution');
+        document.getElementById('nutritionTable').innerHTML = `<table><thead><tr><th>指标</th><th>区间</th><th>数量</th></tr></thead>
+      <tbody>${(nutrition || []).map(x => `<tr><td>${escapeHtml(x.metric)}</td><td>${escapeHtml(x.bucket)}</td><td>${x.count}</td></tr>`).join('')}</tbody></table>`;
+      } catch { }
+      try {
         const hot = await api('/analytics/popular-favorites');
-        document.getElementById('foodHotTable').innerHTML = `<table><thead><tr><th>食物</th><th>收藏次数</th></tr></thead>
-      <tbody>${(hot || []).map(x => `<tr><td>${escapeHtml(x.name)}</td><td>${x.count}</td></tr>`).join('')}</tbody></table>`;
+        document.getElementById('foodHotTable').innerHTML = `<table><thead><tr><th>食物</th><th>分类</th><th>热量</th><th>收藏次数</th><th>录入次数</th></tr></thead>
+      <tbody>${(hot || []).map(x => `<tr><td>${escapeHtml(x.name)}</td><td>${escapeHtml(x.category || '-')}</td><td>${x.calories || '-'}</td><td>${x.favoriteCount || x.count}</td><td>${x.recordCount || 0}</td></tr>`).join('')}</tbody></table>`;
       } catch { }
     }
 
     /* ===================== 用户分析 ===================== */
     async function viewUserAnalysis() {
-      document.getElementById('content').innerHTML = `<div class="panel"><h3>用户行为分析</h3><div id="behaviorTable"></div></div>`;
+      document.getElementById('content').innerHTML = `
+      <div class="panel">
+        <h3>用户行为分析</h3>
+        <div id="behaviorCards" class="stat-grid" style="margin-bottom:18px"><div class="empty">加载中...</div></div>
+      </div>
+      <div class="panel">
+        <h3>用户目标分布</h3>
+        <div id="targetChart"><div class="empty">加载中...</div></div>
+      </div>
+      <div class="panel">
+        <h3>用户分层概览</h3>
+        <div id="layerOverview"><div class="empty">加载中...</div></div>
+      </div>`;
       try {
-        const data = await api('/analytics/user-behavior');
-        document.getElementById('behaviorTable').innerHTML = `<table><thead><tr><th>指标</th><th>值</th></tr></thead>
-      <tbody>${Object.entries(data || {}).map(([k, v]) => `<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : String(v))}</td></tr>`).join('')}</tbody></table>`;
-      } catch { }
+        const [data, layers] = await Promise.all([
+          api('/analytics/user-behavior').catch(() => ({})),
+          api('/users/layers').catch(() => ({}))
+        ]);
+        const labelMap = {
+          totalUsers: ['总用户数', '👥'],
+          todayNewUsers: ['今日新增', '🆕'],
+          dau: ['日活跃用户(DAU)', '🔥'],
+          mau: ['月活跃用户(MAU)', '📅'],
+          todayDietRecords: ['今日饮食记录', '🍽️'],
+          todayWeightRecords: ['今日体重记录', '⚖️'],
+          todayExerciseRecords: ['今日运动记录', '🏃'],
+        };
+        const cardHtml = Object.entries(labelMap).map(([k, [label, icon]]) => {
+          const v = data[k] ?? '-';
+          return `<div class="stat-card"><div class="label">${icon} ${label}</div><div class="value">${v}</div></div>`;
+        }).join('');
+        document.getElementById('behaviorCards').innerHTML = cardHtml;
+
+        // 目标分布
+        const td = data.targetBreakdown || {};
+        const tdTotal = Object.values(td).reduce((a, b) => a + Number(b), 0) || 1;
+        const goalMap = { lose_weight: '减重', maintain: '维持', gain_muscle: '增肌', unknown: '未设置' };
+        document.getElementById('targetChart').innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap">${
+          Object.entries(td).map(([k, v]) => {
+            const pct = Math.round(Number(v) / tdTotal * 100);
+            return `<div style="flex:1;min-width:120px;background:#f8fafc;border-radius:10px;padding:14px 16px;border:1px solid #e2e8f0">
+              <div style="font-size:13px;color:#64748b;margin-bottom:6px">${escapeHtml(goalMap[k] || k)}</div>
+              <div style="font-size:24px;font-weight:700;color:#1e293b">${v}</div>
+              <div style="margin-top:8px;height:6px;background:#e2e8f0;border-radius:3px">
+                <div style="height:100%;width:${pct}%;background:#4f46e5;border-radius:3px"></div>
+              </div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:3px">${pct}%</div>
+            </div>`;
+          }).join('')
+        }</div>`;
+
+        // 分层概览
+        const layerInfo = [
+          { key: 'high_value', label: '高价值用户', color: '#4f46e5', bg: '#eef2ff', desc: '近30天记录≥15次' },
+          { key: 'active', label: '活跃用户', color: '#059669', bg: '#ecfdf5', desc: '近30天记录≥3次' },
+          { key: 'sleeping', label: '沉睡用户', color: '#d97706', bg: '#fffbeb', desc: '近30天有记录但不活跃' },
+          { key: 'lost', label: '流失用户', color: '#dc2626', bg: '#fef2f2', desc: '超30天无记录' },
+        ];
+        const layerTotal = layerInfo.reduce((a, li) => a + Number(layers[li.key] || 0), 0) || 1;
+        document.getElementById('layerOverview').innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">${
+          layerInfo.map(li => {
+            const cnt = Number(layers[li.key] || 0);
+            const pct = Math.round(cnt / layerTotal * 100);
+            return `<div style="background:${li.bg};border-radius:10px;padding:16px 18px;border:1px solid ${li.color}22">
+              <div style="font-size:12px;color:${li.color};font-weight:600;margin-bottom:4px">${li.label}</div>
+              <div style="font-size:28px;font-weight:800;color:#1e293b">${cnt}</div>
+              <div style="font-size:11px;color:#94a3b8;margin:4px 0 8px">${li.desc}</div>
+              <div style="height:6px;background:#e2e8f0;border-radius:3px">
+                <div style="height:100%;width:${pct}%;background:${li.color};border-radius:3px"></div>
+              </div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:3px">${pct}%</div>
+            </div>`;
+          }).join('')
+        }</div>`;
+      } catch (e) { console.error(e); }
     }
 
     /* ===================== 部门管理 ===================== */
@@ -828,14 +1185,15 @@
       <td>${d.id}</td><td>${d.parent_id || 0}</td><td>${escapeHtml(d.dept_name)}</td><td>${d.sort || 0}</td>
       <td><span class="tag ${d.status === 'enable' ? 'green' : 'red'}">${d.status}</span></td>
       <td>
-        <button class="btn sm secondary" onclick='editDept(${JSON.stringify(d)})'>编辑</button>
-        <button class="btn sm danger" onclick="delDept(${d.id})">删除</button>
+        ${hasPerm('dept:list') ? `<button class="btn sm secondary" onclick='editDept(${JSON.stringify(d)})'>编辑</button>` : ''}
+        ${hasPerm('dept:list') ? `<button class="btn sm danger" onclick="delDept(${d.id})">删除</button>` : ''}
       </td></tr>`).join('') || '<tr><td colspan="6" class="empty">暂无</td></tr>'}</tbody></table>`;
     }
-    function editDept(d) {
+    async function editDept(d) {
       d = d || {};
+      const deptTree = await api('/sys/depts/tree');
       showModal(`<h4>${d.id ? '编辑' : '新增'}部门</h4>
-    <div class="form-row"><label>父级ID</label><input id="d_parent" type="number" value="${d.parent_id || 0}" /></div>
+    <div class="form-row"><label>上级部门</label>${renderTreeSelect('deptParentSelect', 'd_parent', deptTree, d.parent_id || 0, '顶级部门', '请选择上级部门', d.id || 0)}</div>
     <div class="form-row"><label>名称</label><input id="d_name" value="${escapeHtml(d.dept_name || '')}" /></div>
     <div class="form-row"><label>排序</label><input id="d_sort" type="number" value="${d.sort || 0}" /></div>
     <div class="form-row"><label>状态</label><select id="d_status">
@@ -879,9 +1237,9 @@
       <td><span class="tag ${r.status === 'enable' ? 'green' : 'red'}">${r.status}</span></td>
       <td>${escapeHtml(r.remark || '')}</td>
       <td>
-        <button class="btn sm" onclick="assignMenu(${r.id},'${escapeHtml(r.role_name)}')">分配菜单</button>
-        <button class="btn sm secondary" onclick='editRole(${JSON.stringify(r)})'>编辑</button>
-        ${r.role_code === 'super_admin' ? '' : `<button class="btn sm danger" onclick="delRole(${r.id})">删除</button>`}
+        ${hasPerm('role:list') ? `<button class="btn sm" onclick="assignMenu(${r.id},'${escapeHtml(r.role_name)}')">分配菜单</button>` : ''}
+        ${hasPerm('role:list') ? `<button class="btn sm secondary" onclick='editRole(${JSON.stringify(r)})'>编辑</button>` : ''}
+        ${hasPerm('role:list') && r.role_code !== 'super_admin' ? `<button class="btn sm danger" onclick="delRole(${r.id})">删除</button>` : ''}
       </td></tr>`).join('')}</tbody></table>`;
     }
     function editRole(r) {
@@ -937,6 +1295,85 @@
       map.forEach(n => { if (n.parent_id && map.has(n.parent_id)) map.get(n.parent_id).children.push(n); else roots.push(n); });
       return roots;
     }
+
+    function escapeJs(s) {
+      return String(s ?? '').replace(/[\\'"\n\r]/g, c => ({ '\\': '\\\\', "'": "\\'", '"': '\\"', '\n': '\\n', '\r': '\\r' }[c]));
+    }
+
+    function findTreeNode(nodes, id) {
+      const target = Number(id || 0);
+      if (!target) return null;
+      for (const node of nodes || []) {
+        if (Number(node.id) === target) return node;
+        const child = findTreeNode(node.children || [], target);
+        if (child) return child;
+      }
+      return null;
+    }
+
+    function collectSubtreeIds(nodes, id, acc = new Set()) {
+      const node = findTreeNode(nodes, id);
+      if (!node) return acc;
+      const walk = (n) => {
+        acc.add(Number(n.id));
+        (n.children || []).forEach(walk);
+      };
+      walk(node);
+      return acc;
+    }
+
+    function renderTreeSelect(wrapperId, inputId, tree, value, rootLabel, placeholder, disabledRootId = 0) {
+      const selectedId = Number(value || 0);
+      const selectedNode = findTreeNode(tree, selectedId);
+      const selectedLabel = selectedId ? (selectedNode?.label || `ID ${selectedId}`) : rootLabel;
+      const disabledIds = disabledRootId ? collectSubtreeIds(tree, disabledRootId) : new Set();
+      const renderNodes = (nodes, depth = 0) => (nodes || []).map((node) => {
+        const children = node.children || [];
+        const isSelected = selectedId === Number(node.id);
+        const isDisabled = disabledIds.has(Number(node.id));
+        const optionClass = `tree-select-option${isSelected ? ' selected' : ''}${isDisabled ? ' disabled' : ''}`;
+        return `<div class="tree-select-row" style="--depth:${depth}">
+          <button type="button" class="tree-select-expand${children.length ? '' : ' placeholder'}" onclick="toggleTreeBranch(event,this)">▾</button>
+          <div class="${optionClass}" ${isDisabled ? '' : `onclick="selectTreeValue(event,'${wrapperId}','${inputId}',${Number(node.id)},'${escapeJs(node.label)}')"`}>
+            ${escapeHtml(node.label)}${node.type ? ` <span class="tag">${escapeHtml(node.type)}</span>` : ''}
+          </div>
+        </div>${children.length ? `<div class="tree-select-branch">${renderNodes(children, depth + 1)}</div>` : ''}`;
+      }).join('');
+      return `<div class="tree-select" id="${wrapperId}">
+        <input type="hidden" id="${inputId}" value="${selectedId}" />
+        <button type="button" class="tree-select-trigger" onclick="toggleTreeSelect('${wrapperId}')"><span id="${inputId}_text">${escapeHtml(selectedLabel || placeholder)}</span><span>▾</span></button>
+        <div class="tree-select-dropdown">
+          <div class="tree-select-row" style="--depth:0"><span class="tree-select-expand placeholder">▾</span><div class="tree-select-option${selectedId === 0 ? ' selected' : ''}" onclick="selectTreeValue(event,'${wrapperId}','${inputId}',0,'${escapeJs(rootLabel)}')">${escapeHtml(rootLabel)}</div></div>
+          ${renderNodes(tree)}
+        </div>
+      </div>`;
+    }
+
+    function toggleTreeSelect(wrapperId) {
+      const target = document.getElementById(wrapperId);
+      document.querySelectorAll('.tree-select.open').forEach(el => {
+        if (el !== target) el.classList.remove('open');
+      });
+      target?.classList.toggle('open');
+    }
+
+    function toggleTreeBranch(evt, btn) {
+      evt.stopPropagation();
+      const branch = btn.parentElement?.nextElementSibling;
+      if (!branch || !branch.classList.contains('tree-select-branch')) return;
+      branch.classList.toggle('collapsed');
+      btn.textContent = branch.classList.contains('collapsed') ? '▸' : '▾';
+    }
+
+    function selectTreeValue(evt, wrapperId, inputId, value, label) {
+      document.getElementById(inputId).value = String(value || 0);
+      document.getElementById(`${inputId}_text`).textContent = label;
+      const wrapper = document.getElementById(wrapperId);
+      wrapper?.classList.remove('open');
+      wrapper?.querySelectorAll('.tree-select-option').forEach(el => el.classList.remove('selected'));
+      evt.target.classList.add('selected');
+    }
+
     async function saveAssignMenu(roleId) {
       const ids = [...document.querySelectorAll('#menuTree input[type=checkbox]')]
         .filter(x => x.checked).map(x => Number(x.dataset.mid));
@@ -944,11 +1381,224 @@
       toast('已保存', 'success'); closeModal();
     }
 
+    /* ===================== 后端用户管理 ===================== */
+    async function viewSysUser() {
+      document.getElementById('content').innerHTML = `<div class="panel">
+    <h3>后端用户管理</h3>
+    <div class="form-row">
+      <input id="suKw" placeholder="搜索用户名/昵称" />
+      <select id="suStatus"><option value="">全部状态</option><option value="enable">启用</option><option value="disable">禁用</option></select>
+      <button class="btn" onclick="loadSysUsers()">查询</button>
+      ${hasPerm('sys:user:add') ? '<button class="btn secondary" onclick="editSysUser()">新增</button>' : ''}
+    </div>
+    <div id="sysUserTable"></div>
+    <div class="pager" id="sysUserPager"></div>
+  </div>`;
+      loadSysUsers();
+    }
+    let suPage = 1;
+    async function loadSysUsers(page) {
+      suPage = page || 1;
+      const kw = document.getElementById('suKw')?.value || '';
+      const status = document.getElementById('suStatus')?.value || '';
+      const q = new URLSearchParams({ page: suPage, limit: 15, ...(kw ? { keyword: kw } : {}), ...(status ? { status } : {}) });
+      const res = await api('/sys/users?' + q);
+      const list = res.data || res || [];
+      const total = res.total || list.length;
+      document.getElementById('sysUserTable').innerHTML = `<table>
+        <thead><tr><th>ID</th><th>用户名</th><th>昵称</th><th>部门</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead>
+        <tbody>${(list).map(u => `<tr>
+          <td>${u.id}</td>
+          <td>${escapeHtml(u.username)}</td>
+          <td>${escapeHtml(u.nickname || '-')}</td>
+          <td>${escapeHtml(u.dept_name || '-')}</td>
+          <td><span class="tag ${u.status === 'enable' ? 'green' : 'red'}">${u.status === 'enable' ? '启用' : '禁用'}</span></td>
+          <td>${fmtTime(u.last_login_at)}</td>
+          <td>
+            ${hasPerm('sys:user:edit') ? `<button class="btn sm secondary" onclick='editSysUser(${JSON.stringify(u)})'>编辑</button>` : ''}
+            ${hasPerm('sys:user:edit') ? `<button class="btn sm secondary" onclick="resetSysUserPwd(${u.id},'${escapeHtml(u.username)}')">重置密码</button>` : ''}
+            ${hasPerm('sys:user:delete') ? `<button class="btn sm danger" onclick="delSysUser(${u.id})">删除</button>` : ''}
+          </td>
+        </tr>`).join('') || '<tr><td colspan="7" class="empty">暂无数据</td></tr>'}</tbody>
+      </table>`;
+      // 分页
+      const pages = Math.ceil(total / 15);
+      document.getElementById('sysUserPager').innerHTML = pages <= 1 ? '' :
+        Array.from({ length: pages }, (_, i) => i + 1).map(p =>
+          `<button class="btn sm ${p === suPage ? '' : 'secondary'}" onclick="loadSysUsers(${p})">${p}</button>`
+        ).join('');
+    }
+    async function editSysUser(u) {
+      u = u || {};
+      const depts = await api('/sys/depts').catch(() => []);
+      const roles = await api('/sys/roles').catch(() => []);
+      let userRoleIds = [];
+      if (u.id) {
+        const ur = await api(`/sys/users/${u.id}/roles`).catch(() => []);
+        userRoleIds = (ur || []).map(r => r.id);
+      }
+      showModal(`<h4>${u.id ? '编辑' : '新增'}后端用户</h4>
+    <div class="form-row"><label>用户名</label><input id="su_username" value="${escapeHtml(u.username || '')}" ${u.id ? 'disabled' : ''} /></div>
+    ${!u.id ? `<div class="form-row"><label>密码</label><input id="su_password" type="password" placeholder="初始密码" /></div>` : ''}
+    <div class="form-row"><label>昵称</label><input id="su_nickname" value="${escapeHtml(u.nickname || '')}" /></div>
+    <div class="form-row"><label>部门</label><select id="su_dept">
+      <option value="">无</option>
+      ${(depts || []).map(d => `<option value="${d.id}" ${u.dept_id == d.id ? 'selected' : ''}>${escapeHtml(d.dept_name)}</option>`).join('')}
+    </select></div>
+    <div class="form-row"><label>角色</label><div style="display:flex;flex-wrap:wrap;gap:8px;padding:6px 0">
+      ${(roles || []).map(r => `<label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+        <input type="checkbox" value="${r.id}" ${userRoleIds.includes(r.id) ? 'checked' : ''}> ${escapeHtml(r.role_name)}</label>`).join('')}
+    </div></div>
+    <div class="form-row"><label>状态</label><select id="su_status">
+      <option value="enable" ${u.status !== 'disable' ? 'selected' : ''}>启用</option>
+      <option value="disable" ${u.status === 'disable' ? 'selected' : ''}>禁用</option></select></div>
+    <div class="actions"><button class="btn secondary" onclick="closeModal()">取消</button>
+    <button class="btn" onclick="saveSysUser(${u.id || 0})">保存</button></div>`);
+    }
+    async function saveSysUser(id) {
+      const roleIds = [...document.querySelectorAll('#modalBox input[type=checkbox]:checked')].map(el => Number(el.value));
+      const body = {
+        nickname: document.getElementById('su_nickname').value.trim(),
+        dept_id: Number(document.getElementById('su_dept').value) || null,
+        status: document.getElementById('su_status').value,
+        roleIds,
+      };
+      if (!id) {
+        body.username = document.getElementById('su_username').value.trim();
+        body.password = document.getElementById('su_password').value;
+        if (!body.username || !body.password) return toast('用户名和密码必填', 'error');
+      }
+      if (id) await api('/sys/users/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else await api('/sys/users', { method: 'POST', body: JSON.stringify(body) });
+      toast('已保存', 'success'); closeModal(); loadSysUsers(suPage);
+    }
+    async function resetSysUserPwd(id, username) {
+      const pwd = prompt(`重置 [${username}] 的密码为：`);
+      if (!pwd) return;
+      await api('/sys/users/' + id + '/password', { method: 'PATCH', body: JSON.stringify({ password: pwd }) });
+      toast('密码已重置', 'success');
+    }
+    async function delSysUser(id) {
+      if (!confirm('确定删除该用户？')) return;
+      await api('/sys/users/' + id, { method: 'DELETE' });
+      toast('已删除', 'success'); loadSysUsers(suPage);
+    }
+
+    /* ===================== 后端用户管理 ===================== */
+    async function viewSysUser() {
+      document.getElementById('content').innerHTML = `<div class="panel">
+    <h3>后端用户管理</h3>
+    <div class="form-row">
+      <input id="suKw" placeholder="搜索用户名/昵称" style="width:200px" />
+      <select id="suStatus"><option value="">全部状态</option><option value="enable">启用</option><option value="disable">禁用</option></select>
+      <button class="btn" onclick="loadSysUsers()">查询</button>
+      <button class="btn secondary" onclick="editSysUser()">新增账号</button>
+    </div>
+    <div id="sysUserTable"></div>
+    <div class="pager" id="sysUserPager"></div>
+  </div>`;
+      loadSysUsers(1);
+    }
+    let _suPage = 1;
+    async function loadSysUsers(page) {
+      _suPage = page || _suPage || 1;
+      const kw = document.getElementById('suKw')?.value || '';
+      const status = document.getElementById('suStatus')?.value || '';
+      const params = new URLSearchParams({ page: _suPage, pageSize: 15 });
+      if (kw) params.set('keyword', kw);
+      if (status) params.set('status', status);
+      const res = await api('/sys/users?' + params);
+      const rows = res.data || [];
+      document.getElementById('sysUserTable').innerHTML = `<table>
+      <thead><tr><th>ID</th><th>用户名</th><th>昵称</th><th>部门</th><th>角色</th><th>手机</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead>
+      <tbody>${rows.map(u => `<tr>
+        <td>${u.id}</td>
+        <td><strong>${escapeHtml(u.username)}</strong></td>
+        <td>${escapeHtml(u.nickname || '-')}</td>
+        <td>${escapeHtml(u.dept_name || '-')}</td>
+        <td>${(u.role_names || []).map(r => `<span class="tag blue">${escapeHtml(r)}</span>`).join(' ') || '-'}</td>
+        <td>${escapeHtml(u.phone || '-')}</td>
+        <td><span class="tag ${u.status === 'enable' ? 'green' : 'red'}">${u.status === 'enable' ? '启用' : '禁用'}</span></td>
+        <td>${fmtTime(u.last_login_at)}</td>
+        <td>
+          <button class="btn sm secondary" onclick='editSysUser(${JSON.stringify(u)})'>编辑</button>
+          <button class="btn sm secondary" onclick="resetSysUserPwd(${u.id},'${escapeHtml(u.username)}')">重置密码</button>
+          <button class="btn sm danger" onclick="delSysUser(${u.id},'${escapeHtml(u.username)}')">删除</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="9" class="empty">暂无数据</td></tr>'}</tbody></table>`;
+      const total = res.total || 0;
+      const pageCount = Math.ceil(total / 15);
+      document.getElementById('sysUserPager').innerHTML = `共 ${total} 条 &nbsp;`
+        + Array.from({ length: pageCount }, (_, i) => `<button class="btn sm${i + 1 === _suPage ? '' : ' secondary'}" onclick="loadSysUsers(${i + 1})">${i + 1}</button>`).join(' ');
+    }
+    async function editSysUser(u) {
+      u = u || {};
+      const [roles, depts] = await Promise.all([api('/sys/roles'), api('/sys/depts')]);
+      const userRoleIds = (u.role_codes || []);
+      showModal(`<h4>${u.id ? '编辑账号' : '新增账号'}</h4>
+      <div class="form-row"><label>用户名</label><input id="su_username" value="${escapeHtml(u.username || '')}" ${u.id ? 'readonly' : ''} /></div>
+      ${!u.id ? `<div class="form-row"><label>密码</label><input id="su_password" type="password" placeholder="登录密码" /></div>` : ''}
+      <div class="form-row"><label>昵称</label><input id="su_nickname" value="${escapeHtml(u.nickname || '')}" /></div>
+      <div class="form-row"><label>手机</label><input id="su_phone" value="${escapeHtml(u.phone || '')}" /></div>
+      <div class="form-row"><label>邮箱</label><input id="su_email" value="${escapeHtml(u.email || '')}" /></div>
+      <div class="form-row"><label>部门</label><select id="su_dept">
+        <option value="">请选择</option>
+        ${(depts || []).map(d => `<option value="${d.id}" ${String(u.dept_id) === String(d.id) ? 'selected' : ''}>${escapeHtml(d.dept_name)}</option>`).join('')}
+      </select></div>
+      <div class="form-row"><label>状态</label><select id="su_status">
+        <option value="enable" ${u.status !== 'disable' ? 'selected' : ''}>启用</option>
+        <option value="disable" ${u.status === 'disable' ? 'selected' : ''}>禁用</option>
+      </select></div>
+      <div class="form-row"><label>角色</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">${(roles || []).map(r => `<label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" name="su_role" value="${r.id}" ${userRoleIds.includes(r.role_code) ? 'checked' : ''}> ${escapeHtml(r.role_name)}</label>`).join('')}</div>
+      </div>
+      <div class="actions">
+        <button class="btn secondary" onclick="closeModal()">取消</button>
+        <button class="btn" onclick="saveSysUser(${u.id || 0})">保存</button>
+      </div>`);
+    }
+    async function saveSysUser(id) {
+      const username = document.getElementById('su_username')?.value.trim();
+      const password = document.getElementById('su_password')?.value;
+      const nickname = document.getElementById('su_nickname')?.value.trim();
+      const phone = document.getElementById('su_phone')?.value.trim();
+      const email = document.getElementById('su_email')?.value.trim();
+      const dept_id = document.getElementById('su_dept')?.value || null;
+      const status = document.getElementById('su_status')?.value;
+      const roleIds = [...document.querySelectorAll('input[name="su_role"]:checked')].map(el => Number(el.value));
+      if (!username) return toast('用户名必填', 'error');
+      if (!id && !password) return toast('密码必填', 'error');
+      const body = { username, nickname, phone, email, dept_id: dept_id ? Number(dept_id) : null, status, roleIds };
+      if (password) body.password = password;
+      if (id) await api('/sys/users/' + id, { method: 'PUT', body: JSON.stringify(body) });
+      else await api('/sys/users', { method: 'POST', body: JSON.stringify(body) });
+      toast('已保存', 'success'); closeModal(); loadSysUsers();
+    }
+    async function resetSysUserPwd(id, username) {
+      showModal(`<h4>重置密码 - ${escapeHtml(username)}</h4>
+      <div class="form-row"><label>新密码</label><input id="newPwd" type="password" placeholder="请输入新密码（≥6位）" /></div>
+      <div class="actions">
+        <button class="btn secondary" onclick="closeModal()">取消</button>
+        <button class="btn" onclick="doResetPwd(${id})">确认重置</button>
+      </div>`);
+    }
+    async function doResetPwd(id) {
+      const pwd = document.getElementById('newPwd')?.value;
+      if (!pwd || pwd.length < 6) return toast('密码至少6位', 'error');
+      await api('/sys/users/' + id + '/password', { method: 'PATCH', body: JSON.stringify({ password: pwd }) });
+      toast('密码已重置', 'success'); closeModal();
+    }
+    async function delSysUser(id, username) {
+      if (!confirm(`确定删除账号「${username}」？`)) return;
+      await api('/sys/users/' + id, { method: 'DELETE' });
+      toast('已删除', 'success'); loadSysUsers();
+    }
+
     /* ===================== 菜单管理 ===================== */
     async function viewMenu() {
       document.getElementById('content').innerHTML = `<div class="panel">
     <h3>菜单管理</h3>
-    <div class="form-row"><button class="btn" onclick="editMenu()">新增菜单</button></div>
+    <div class="form-row">${hasPerm('menu:list') ? '<button class="btn" onclick="editMenu()">新增菜单</button>' : ''}</div>
     <div id="menuMgrTable"></div></div>`;
       loadMenus();
     }
@@ -967,14 +1617,15 @@
       <td><span class="tag blue">${escapeHtml(m.permission || '')}</span></td>
       <td>${m.sort || 0}</td>
       <td>
-        <button class="btn sm secondary" onclick='editMenu(${JSON.stringify({ ...m, children: undefined, _depth: undefined })})'>编辑</button>
-        <button class="btn sm danger" onclick="delMenu(${m.id})">删除</button>
+        ${hasPerm('menu:list') ? `<button class="btn sm secondary" onclick='editMenu(${JSON.stringify({ ...m, children: undefined, _depth: undefined })})'>编辑</button>` : ''}
+        ${hasPerm('menu:list') ? `<button class="btn sm danger" onclick="delMenu(${m.id})">删除</button>` : ''}
       </td></tr>`).join('')}</tbody></table>`;
     }
-    function editMenu(m) {
+    async function editMenu(m) {
       m = m || {};
+      const menuTree = await api('/sys/menus/tree');
       showModal(`<h4>${m.id ? '编辑' : '新增'}菜单</h4>
-    <div class="form-row"><label>父级ID</label><input id="m_parent" type="number" value="${m.parent_id || 0}" /></div>
+    <div class="form-row"><label>上级菜单</label>${renderTreeSelect('menuParentSelect', 'm_parent', menuTree, m.parent_id || 0, '顶级菜单', '请选择上级菜单', m.id || 0)}</div>
     <div class="form-row"><label>名称</label><input id="m_name" value="${escapeHtml(m.menu_name || '')}" /></div>
     <div class="form-row"><label>类型</label><select id="m_type">
       <option value="menu" ${m.type === 'menu' ? 'selected' : ''}>菜单</option>
@@ -1036,13 +1687,26 @@
       });
       const data = await api('/sys/logs?' + qs);
       document.getElementById('logTable').innerHTML = `<table><thead>
-    <tr><th>ID</th><th>用户</th><th>模块</th><th>操作内容</th><th>IP</th><th>时间</th></tr></thead>
+    <tr><th>ID</th><th>用户</th><th>模块</th><th>操作内容</th><th>IP</th><th>时间</th><th>详情</th></tr></thead>
     <tbody>${(data.data || []).map(l => `<tr>
       <td>${l.id}</td><td>${escapeHtml(l.username || '-')}</td>
       <td><span class="tag">${escapeHtml(l.module || '')}</span></td>
       <td>${escapeHtml(l.content || '')}</td><td>${escapeHtml(l.ip || '-')}</td>
-      <td>${fmtTime(l.created_at)}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">暂无</td></tr>'}</tbody></table>`;
+      <td>${fmtTime(l.created_at)}</td>
+      <td>${l.has_details ? `<button class="btn sm secondary" onclick="showLogDetail(${l.id})">查看</button>` : '<span class="tag">无</span>'}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">暂无</td></tr>'}</tbody></table>`;
       document.getElementById('logPager').innerHTML = pagerHtml(data, 'loadLogs');
+    }
+
+    async function showLogDetail(id) {
+      const log = await api('/sys/logs/' + id);
+      showModal(`<h4>操作日志详情 #${log.id}</h4>
+    <div class="form-row"><label>用户</label><input value="${escapeHtml(log.username || '-')}" disabled /></div>
+    <div class="form-row"><label>模块</label><input value="${escapeHtml(log.module || '-')}" disabled /></div>
+    <div class="form-row"><label>操作</label><input value="${escapeHtml(log.content || '-')}" disabled /></div>
+    <div class="form-row"><label>IP</label><input value="${escapeHtml(log.ip || '-')}" disabled /></div>
+    <div class="form-row"><label>时间</label><input value="${escapeHtml(fmtTime(log.created_at))}" disabled /></div>
+    <div class="form-row"><label>详情</label><textarea style="min-height:260px;font-family:Consolas,monospace" readonly>${escapeHtml(prettyJson(log.details))}</textarea></div>
+    <div class="actions"><button class="btn secondary" onclick="closeModal()">关闭</button></div>`);
     }
 
     /* ===================== 食物分类 ===================== */
@@ -1055,7 +1719,7 @@
     <tr><th>分类</th><th>食物数</th><th>操作</th></tr></thead>
     <tbody>${(list || []).map(c => `<tr>
       <td>${escapeHtml(c.name)}</td><td>${c.food_count}</td>
-      <td><button class="btn sm secondary" onclick="renameCat('${escapeHtml(c.name)}')">重命名</button></td>
+      <td>${hasPerm('system:foodCategory') ? `<button class="btn sm secondary" onclick="renameCat('${escapeHtml(c.name)}')">重命名</button>` : ''}</td>
     </tr>`).join('') || '<tr><td colspan="3" class="empty">暂无</td></tr>'}</tbody></table>`;
     }
     async function renameCat(oldName) {
@@ -1078,7 +1742,7 @@
       <td>${escapeHtml(p.param_value || '')}</td>
       <td>${escapeHtml(p.remark || '')}</td>
       <td>${fmtTime(p.updated_at)}</td>
-      <td><button class="btn sm secondary" onclick="editParam('${escapeHtml(p.param_key)}','${escapeHtml(p.param_value || '')}','${escapeHtml(p.remark || '')}')">编辑</button></td>
+      <td>${hasPerm('system:param') ? `<button class="btn sm secondary" onclick="editParam('${escapeHtml(p.param_key)}','${escapeHtml(p.param_value || '')}','${escapeHtml(p.remark || '')}')">编辑</button>` : ''}</td>
     </tr>`).join('')}</tbody></table>`;
     }
     function editParam(key, val, remark) {
@@ -1128,6 +1792,49 @@
       } catch {
         box.innerHTML = '<div class="empty">当前数据摘要加载失败</div>';
       }
+    }
+
+    async function loadBackupSchedule() {
+      const box = document.getElementById('backupScheduleBox');
+      if (!box) return;
+      box.innerHTML = '<div class="empty">加载中...</div>';
+      try {
+        const cfg = await api('/sys/backup/schedule');
+        box.innerHTML = `<div class="form-row">
+          <label>启用定时</label>
+          <select id="backupScheduleEnabled"><option value="true" ${cfg.enabled ? 'selected' : ''}>启用</option><option value="false" ${!cfg.enabled ? 'selected' : ''}>停用</option></select>
+          <label>频率</label>
+          <select id="backupScheduleFrequency"><option value="daily" ${cfg.frequency === 'daily' ? 'selected' : ''}>每日</option><option value="weekly" ${cfg.frequency === 'weekly' ? 'selected' : ''}>每周</option></select>
+          <label>时间</label><input id="backupScheduleTime" type="time" value="${escapeHtml(cfg.time || '02:00')}" />
+        </div>
+        <div class="form-row">
+          <label>保存目录</label><input id="backupSchedulePath" style="min-width:320px" value="${escapeHtml(cfg.path || 'backups')}" />
+          ${hasPerm('system:backup') ? '<button class="btn" onclick="saveBackupSchedule()">保存配置</button>' : ''}
+          ${hasPerm('system:backup') ? '<button class="btn secondary" onclick="runScheduledBackupNow()">立即执行一次</button>' : ''}
+        </div>
+        <p>说明：定时配置保存到系统参数中；“立即执行一次”会按配置目录生成 JSON 备份文件。</p>`;
+      } catch {
+        box.innerHTML = '<div class="empty">定时备份配置加载失败</div>';
+      }
+    }
+
+    async function saveBackupSchedule() {
+      const body = {
+        enabled: document.getElementById('backupScheduleEnabled').value === 'true',
+        frequency: document.getElementById('backupScheduleFrequency').value,
+        time: document.getElementById('backupScheduleTime').value || '02:00',
+        path: document.getElementById('backupSchedulePath').value || 'backups',
+      };
+      await api('/sys/backup/schedule', { method: 'PUT', body: JSON.stringify(body) });
+      toast('定时备份配置已保存', 'success');
+      loadBackupSchedule();
+    }
+
+    async function runScheduledBackupNow() {
+      if (!confirm('确认按当前定时备份配置立即生成一次备份文件？')) return;
+      const result = await api('/sys/backup/schedule/run', { method: 'POST' });
+      renderBackupResult(`计划备份已生成：${result.filename || ''}`, (result && result.counts) || {});
+      toast('计划备份已生成', 'success');
     }
 
     async function downloadBackup() {
@@ -1207,14 +1914,18 @@
     <h3>数据备份恢复</h3>
     <p>在线备份会导出当前业务表的 JSON 快照；在线恢复会覆盖现有数据，请谨慎操作。</p>
     <div class="form-row">
-      <button class="btn" id="backupExportBtn" onclick="downloadBackup()">下载当前备份</button>
+      ${hasPerm('system:backup') ? '<button class="btn" id="backupExportBtn" onclick="downloadBackup()">下载当前备份</button>' : ''}
       <button class="btn secondary" onclick="loadBackupSummary()">刷新当前摘要</button>
     </div>
     <div class="form-row">
       <input id="backupFile" type="file" accept="application/json,.json" />
-      <button class="btn danger" id="backupRestoreBtn" onclick="restoreBackup()">恢复所选备份</button>
+      ${hasPerm('system:backup') ? '<button class="btn danger" id="backupRestoreBtn" onclick="restoreBackup()">恢复所选备份</button>' : ''}
     </div>
     <p>建议保留数据库级 <code>pg_dump</code> 备份作为最终兜底；在线恢复更适合当前项目的快速迁移与回滚。</p>
+  </div>
+  <div class="panel">
+    <h3>定时备份配置</h3>
+    <div id="backupScheduleBox"><div class="empty">加载中...</div></div>
   </div>
   <div class="panel">
     <h3>当前数据摘要</h3>
@@ -1225,6 +1936,7 @@
     <div class="empty">还没有执行在线备份或恢复</div>
   </div>`;
       loadBackupSummary();
+      loadBackupSchedule();
     }
 
     boot();

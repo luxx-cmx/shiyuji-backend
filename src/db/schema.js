@@ -56,6 +56,10 @@ export async function ensureSchema() {
         name text UNIQUE NOT NULL,
         category text NOT NULL,
         calories int NOT NULL,
+        protein numeric DEFAULT 0,
+        fat numeric DEFAULT 0,
+        carbohydrate numeric DEFAULT 0,
+        audit_status text DEFAULT 'approved',
         created_at timestamptz DEFAULT now()
       );
     `);
@@ -146,6 +150,11 @@ export async function ensureSchema() {
     await client.query(`ALTER TABLE app_update_record ADD COLUMN IF NOT EXISTS force_update boolean DEFAULT false;`);
     await client.query(`ALTER TABLE app_update_record ADD COLUMN IF NOT EXISTS update_time timestamptz DEFAULT now();`);
     await client.query(`ALTER TABLE app_update_record ALTER COLUMN update_time SET DEFAULT now();`);
+    await client.query(`ALTER TABLE foods ADD COLUMN IF NOT EXISTS protein numeric DEFAULT 0;`);
+    await client.query(`ALTER TABLE foods ADD COLUMN IF NOT EXISTS fat numeric DEFAULT 0;`);
+    await client.query(`ALTER TABLE foods ADD COLUMN IF NOT EXISTS carbohydrate numeric DEFAULT 0;`);
+    await client.query(`ALTER TABLE foods ADD COLUMN IF NOT EXISTS audit_status text DEFAULT 'approved';`);
+    await client.query(`UPDATE foods SET audit_status = 'approved' WHERE audit_status IS NULL;`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS admin_users (
@@ -249,10 +258,13 @@ export async function ensureSchema() {
         username text,
         module text,
         content text,
+        details jsonb,
         ip text,
         created_at timestamptz DEFAULT now()
       );
     `);
+
+    await client.query(`ALTER TABLE sys_operation_log ADD COLUMN IF NOT EXISTS details jsonb;`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS sys_param (
@@ -434,6 +446,10 @@ async function seedDefaultParams(client) {
     { key: 'dashboard.refresh.seconds', value: '300', remark: '看板自动刷新秒数' },
     { key: 'user.inactive.days', value: '30', remark: '流失用户判定天数' },
     { key: 'food.alert.daily.threshold', value: '50', remark: '每日新增食物预警阈值' },
+    { key: 'backup.schedule.enabled', value: 'false', remark: '是否启用定时备份' },
+    { key: 'backup.schedule.frequency', value: 'daily', remark: '定时备份频率：daily/weekly' },
+    { key: 'backup.schedule.time', value: '02:00', remark: '定时备份时间 HH:mm' },
+    { key: 'backup.schedule.path', value: 'backups', remark: '定时备份保存目录' },
   ];
   for (const p of defaults) {
     await client.query(

@@ -119,4 +119,29 @@ router.delete('/:id', requirePerm('role:list', 'permission:view'), async (req, r
   } catch (e) { return next(e); }
 });
 
+// 获取用户角色列表
+router.get('/:id/roles', requirePerm('permission:view', 'role:list'), async (req, res, next) => {
+  try {
+    const r = await pool.query(
+      `SELECT r.id, r.role_code, r.role_name FROM sys_role r
+       JOIN sys_user_role ur ON ur.role_id = r.id
+       WHERE ur.user_id = $1`, [req.params.id]
+    );
+    return res.json(r.rows);
+  } catch (e) { return next(e); }
+});
+
+// 重置密码
+router.patch('/:id/password', requirePerm('permission:view', 'role:list'), async (req, res, next) => {
+  try {
+    const { password } = req.body || {};
+    if (!password) return res.status(400).json({ message: '密码不能为空' });
+    const hash = await hashPassword(password);
+    const r = await pool.query(`UPDATE sys_user SET password_hash=$1 WHERE id=$2 RETURNING username`, [hash, req.params.id]);
+    if (!r.rowCount) return res.status(404).json({ message: '用户不存在' });
+    logAction(req, '后台账号', `重置密码：${r.rows[0].username}`);
+    return res.json({ message: '密码已重置' });
+  } catch (e) { return next(e); }
+});
+
 export default router;

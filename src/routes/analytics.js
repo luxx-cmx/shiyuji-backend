@@ -75,14 +75,63 @@ async function getFoodsOverview() {
 
 async function getFoodsPopularFavorites() {
   const { rows } = await pool.query(`
-    SELECT fav.name, COUNT(1)::int AS favorite_count
+    SELECT fav.name,
+           COUNT(1)::int AS favorite_count,
+           COALESCE(diet.entry_count, 0)::int AS record_count,
+           COALESCE(food.category, '未知') AS category,
+           food.calories
     FROM favorites fav
+    LEFT JOIN LATERAL (
+      SELECT COUNT(1)::int AS entry_count FROM diet_records d WHERE d.name = fav.name
+    ) diet ON true
+    LEFT JOIN LATERAL (
+      SELECT category, calories FROM foods f WHERE f.name = fav.name LIMIT 1
+    ) food ON true
     WHERE fav.name IS NOT NULL AND fav.name <> ''
-    GROUP BY fav.name
-    ORDER BY favorite_count DESC
+    GROUP BY fav.name, diet.entry_count, food.category, food.calories
+    ORDER BY favorite_count DESC, record_count DESC
     LIMIT 20
   `);
 
+  return rows;
+}
+
+async function getFoodNutritionDistribution() {
+  const { rows } = await pool.query(`
+    SELECT 'calories' AS metric,
+           CASE
+             WHEN calories < 100 THEN '0-99'
+             WHEN calories < 300 THEN '100-299'
+             WHEN calories < 600 THEN '300-599'
+             ELSE '600+'
+           END AS bucket,
+           COUNT(1)::int AS count
+    FROM foods
+    GROUP BY metric, bucket
+    UNION ALL
+    SELECT 'protein' AS metric,
+           CASE
+             WHEN COALESCE(protein, 0) < 5 THEN '0-4g'
+             WHEN COALESCE(protein, 0) < 15 THEN '5-14g'
+             WHEN COALESCE(protein, 0) < 30 THEN '15-29g'
+             ELSE '30g+'
+           END AS bucket,
+           COUNT(1)::int AS count
+    FROM foods
+    GROUP BY metric, bucket
+    UNION ALL
+    SELECT 'fat' AS metric,
+           CASE
+             WHEN COALESCE(fat, 0) < 5 THEN '0-4g'
+             WHEN COALESCE(fat, 0) < 15 THEN '5-14g'
+             WHEN COALESCE(fat, 0) < 30 THEN '15-29g'
+             ELSE '30g+'
+           END AS bucket,
+           COUNT(1)::int AS count
+    FROM foods
+    GROUP BY metric, bucket
+    ORDER BY metric, bucket
+  `);
   return rows;
 }
 
@@ -189,7 +238,22 @@ router.get('/food-categories', async (req, res, next) => {
 router.get('/popular-favorites', async (req, res, next) => {
   try {
     const rows = await getFoodsPopularFavorites();
-    return res.json(rows.map((row) => ({ name: row.name, count: row.favorite_count })));
+    return res.json(rows.map((row) => ({
+      name: row.name,
+      count: row.favorite_count,
+      favoriteCount: row.favorite_count,
+      recordCount: row.record_count,
+      category: row.category,
+      calories: row.calories,
+    })));
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.get('/foods/nutrition-distribution', async (req, res, next) => {
+  try {
+    return res.json(await getFoodNutritionDistribution());
   } catch (error) {
     return next(error);
   }

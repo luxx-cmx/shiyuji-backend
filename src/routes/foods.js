@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db/pool.js';
-import { requireAdminAuth } from '../middleware/auth.js';
+import { requireAdminAuth, requirePerm } from '../middleware/auth.js';
+import { logAction } from '../utils/logger.js';
 
 const router = Router();
 
@@ -8,6 +9,7 @@ router.get('/', async (req, res, next) => {
   try {
     const {
       category,
+      auditStatus,
       keyword,
       sortBy = 'id',
       order = 'desc',
@@ -28,6 +30,11 @@ router.get('/', async (req, res, next) => {
       where.push(`name ILIKE $${values.length}`);
     }
 
+    if (auditStatus) {
+      values.push(auditStatus);
+      where.push(`COALESCE(audit_status, 'approved') = $${values.length}`);
+    }
+
     const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const sortField = ['id', 'name', 'calories', 'created_at', 'category'].includes(sortBy)
@@ -42,7 +49,8 @@ router.get('/', async (req, res, next) => {
     const offsetIdx = values.length;
 
     const listSql = `
-      SELECT id, name, category, calories, created_at
+            SELECT id, name, category, calories, protein, fat, carbohydrate,
+              COALESCE(audit_status, 'approved') AS audit_status, created_at
       FROM foods
       ${whereClause}
       ORDER BY ${sortField} ${sortOrder}
@@ -85,19 +93,23 @@ router.get('/categories', async (req, res, next) => {
 router.get('/export/csv', requireAdminAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, name, category, calories, created_at
+      `SELECT id, name, category, calories, protein, fat, carbohydrate, COALESCE(audit_status, 'approved') AS audit_status, created_at
        FROM foods
        ORDER BY id DESC
        LIMIT 50000`
     );
 
-    const header = 'id,name,category,calories,created_at';
+    const header = 'id,name,category,calories,protein,fat,carbohydrate,audit_status,created_at';
     const lines = rows.map((r) =>
       [
         r.id,
         (r.name || '').replaceAll(',', '，'),
         (r.category || '').replaceAll(',', '，'),
         r.calories,
+        r.protein || 0,
+        r.fat || 0,
+        r.carbohydrate || 0,
+        r.audit_status,
         r.created_at.toISOString(),
       ].join(',')
     );
@@ -115,7 +127,8 @@ router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     const { rows } = await pool.query(
-      `SELECT id, name, category, calories, created_at
+      `SELECT id, name, category, calories, protein, fat, carbohydrate,
+              COALESCE(audit_status, 'approved') AS audit_status, created_at
        FROM foods
        WHERE id = $1`,
       [id]
@@ -133,21 +146,22 @@ router.get('/:id', async (req, res, next) => {
 
 router.use(requireAdminAuth);
 
-router.post('/', async (req, res, next) => {
+router.post('/', requirePerm('food:add'), async (req, res, next) => {
   try {
-    const { name, category, calories } = req.body;
+    const { name, category, calories, protein = 0, fat = 0, carbohydrate = 0, audit_status = 'approved' } = req.body;
 
     if (!name || !category || Number.isNaN(Number(calories))) {
       return res.status(400).json({ message: 'name/category/calories 必填' });
     }
 
     const { rows } = await pool.query(
-      `INSERT INTO foods (name, category, calories)
-       VALUES ($1, $2, $3)
-       RETURNING id, name, category, calories, created_at`,
-      [name.trim(), category.trim(), Number(calories)]
+      `INSERT INTO foods (name, category, calories, protein, fat, carbohydrate, audit_status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, name, category, calories, protein, fat, carbohydrate, audit_status, created_at`,
+      [name.trim(), category.trim(), Number(calories), Number(protein) || 0, Number(fat) || 0, Number(carbohydrate) || 0, audit_status]
     );
 
+    logAction(req, '食物管理', `新增食物：${rows[0].name}`, { after: rows[0] });
     return res.status(201).json(rows[0]);
   } catch (error) {
     if (error.code === '23505') {
@@ -157,7 +171,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.post('/batch', async (req, res, next) => {
+router.post('/batch', requirePerm('food:batchImport'), async (req, res, next) => {
   try {
     const { items = [] } = req.body;
     if (!Array.isArray(items) || items.length === 0) {
@@ -196,25 +210,52 @@ router.post('/batch', async (req, res, next) => {
   }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.post('/:id/audit', requirePerm('food:audit'), async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, category, calories } = req.body;
+    const { audit_status } = req.body || {};
+    if (!['pending', 'approved', 'rejected'].includes(audit_status)) {
+      return res.status(400).json({ message: 'audit_status 仅支持 pending/approved/rejected' });
+    }
+    const before = await pool.query(`SELECT id, name, audit_status FROM foods WHERE id = $1`, [id]);
+    const { rows, rowCount } = await pool.query(
+      `UPDATE foods SET audit_status = $1 WHERE id = $2
+       RETURNING id, name, category, calories, protein, fat, carbohydrate, audit_status, created_at`,
+      [audit_status, id]
+    );
+    if (!rowCount) return res.status(404).json({ message: '食物不存在' });
+    logAction(req, '食物审核', `审核食物：${rows[0].name} -> ${audit_status}`, { before: before.rows[0] || null, after: rows[0] });
+    return res.json(rows[0]);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.put('/:id', requirePerm('food:edit'), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, category, calories, protein, fat, carbohydrate, audit_status } = req.body;
+    const before = await pool.query(`SELECT * FROM foods WHERE id = $1`, [id]);
 
     const result = await pool.query(
       `UPDATE foods
        SET name = COALESCE($1, name),
            category = COALESCE($2, category),
-           calories = COALESCE($3, calories)
-       WHERE id = $4
-       RETURNING id, name, category, calories, created_at`,
-      [name?.trim(), category?.trim(), calories ?? null, id]
+           calories = COALESCE($3, calories),
+           protein = COALESCE($4, protein),
+           fat = COALESCE($5, fat),
+           carbohydrate = COALESCE($6, carbohydrate),
+           audit_status = COALESCE($7, audit_status)
+       WHERE id = $8
+       RETURNING id, name, category, calories, protein, fat, carbohydrate, audit_status, created_at`,
+      [name?.trim(), category?.trim(), calories ?? null, protein ?? null, fat ?? null, carbohydrate ?? null, audit_status ?? null, id]
     );
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: '食物不存在' });
     }
 
+    logAction(req, '食物管理', `编辑食物：${result.rows[0].name}`, { before: before.rows[0] || null, after: result.rows[0] });
     return res.json(result.rows[0]);
   } catch (error) {
     if (error.code === '23505') {
@@ -224,22 +265,24 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requirePerm('food:delete'), async (req, res, next) => {
   try {
     const { id } = req.params;
+    const before = await pool.query(`SELECT * FROM foods WHERE id = $1`, [id]);
     const result = await pool.query('DELETE FROM foods WHERE id = $1', [id]);
 
     if (result.rowCount === 0) {
       return res.status(404).json({ message: '食物不存在' });
     }
 
+    logAction(req, '食物管理', `删除食物 ID=${id}`, { before: before.rows[0] || null });
     return res.status(204).send();
   } catch (error) {
     return next(error);
   }
 });
 
-router.post('/batch-delete', async (req, res, next) => {
+router.post('/batch-delete', requirePerm('food:batchDelete'), async (req, res, next) => {
   try {
     const { ids = [] } = req.body;
     if (!Array.isArray(ids) || ids.length === 0) {

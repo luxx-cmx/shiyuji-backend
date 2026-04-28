@@ -16,6 +16,7 @@ router.get('/', requirePerm('system:param'), async (req, res, next) => {
 router.put('/:key', requirePerm('system:param'), async (req, res, next) => {
   try {
     const { param_value, remark } = req.body || {};
+    const before = await pool.query(`SELECT param_key, param_value, remark, updated_at FROM sys_param WHERE param_key = $1`, [req.params.key]);
     const r = await pool.query(
       `INSERT INTO sys_param (param_key, param_value, remark, updated_at)
        VALUES ($1,$2,$3, NOW())
@@ -26,7 +27,7 @@ router.put('/:key', requirePerm('system:param'), async (req, res, next) => {
        RETURNING id, param_key, param_value, remark, updated_at`,
       [req.params.key, String(param_value ?? ''), remark || null]
     );
-    logAction(req, '系统参数', `更新参数：${req.params.key}`);
+    logAction(req, '系统参数', `更新参数：${req.params.key}`, { before: before.rows[0] || null, after: r.rows[0] });
     return res.json(r.rows[0]);
   } catch (e) { return next(e); }
 });

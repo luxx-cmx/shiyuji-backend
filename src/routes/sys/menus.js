@@ -6,6 +6,24 @@ import { logAction } from '../../utils/logger.js';
 const router = Router();
 router.use(requireAdminAuth);
 
+function buildTree(list, parentId = 0) {
+  return list
+    .filter((item) => Number(item.parentId || 0) === Number(parentId))
+    .map((item) => {
+      const children = buildTree(list, item.id);
+      const node = {
+        id: Number(item.id),
+        label: item.label,
+        parentId: Number(item.parentId || 0),
+        type: item.type,
+        permission: item.permission,
+        status: item.status,
+      };
+      if (children.length) node.children = children;
+      return node;
+    });
+}
+
 router.get('/', requirePerm('menu:list'), async (req, res, next) => {
   try {
     const { rows } = await pool.query(
@@ -13,6 +31,18 @@ router.get('/', requirePerm('menu:list'), async (req, res, next) => {
        FROM sys_menu ORDER BY sort ASC, id ASC`
     );
     return res.json(rows);
+  } catch (e) { return next(e); }
+});
+
+router.get('/tree', requirePerm('menu:list'), async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, parent_id AS "parentId", menu_name AS label, type, permission, status
+       FROM sys_menu
+       WHERE status = 'enable'
+       ORDER BY sort ASC, id ASC`
+    );
+    return res.json(buildTree(rows));
   } catch (e) { return next(e); }
 });
 
@@ -25,7 +55,7 @@ router.post('/', requirePerm('menu:list'), async (req, res, next) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
       [parent_id, menu_name, path || null, icon || null, type, permission || null, sort, status]
     );
-    logAction(req, '菜单管理', `新增菜单：${menu_name}`);
+    logAction(req, '菜单管理', `新增菜单：${menu_name}`, { after: rows[0] });
     return res.status(201).json(rows[0]);
   } catch (e) { return next(e); }
 });
@@ -33,6 +63,7 @@ router.post('/', requirePerm('menu:list'), async (req, res, next) => {
 router.put('/:id', requirePerm('menu:list'), async (req, res, next) => {
   try {
     const { parent_id, menu_name, path, icon, type, permission, sort, status } = req.body || {};
+    const before = await pool.query(`SELECT * FROM sys_menu WHERE id = $1`, [req.params.id]);
     const { rows, rowCount } = await pool.query(
       `UPDATE sys_menu SET
          parent_id = COALESCE($1, parent_id),
@@ -47,7 +78,7 @@ router.put('/:id', requirePerm('menu:list'), async (req, res, next) => {
       [parent_id ?? null, menu_name ?? null, path ?? null, icon ?? null, type ?? null, permission ?? null, sort ?? null, status ?? null, req.params.id]
     );
     if (!rowCount) return res.status(404).json({ message: '菜单不存在' });
-    logAction(req, '菜单管理', `编辑菜单：${rows[0].menu_name}`);
+    logAction(req, '菜单管理', `编辑菜单：${rows[0].menu_name}`, { before: before.rows[0] || null, after: rows[0] });
     return res.json(rows[0]);
   } catch (e) { return next(e); }
 });
@@ -56,9 +87,10 @@ router.delete('/:id', requirePerm('menu:list'), async (req, res, next) => {
   try {
     const has = await pool.query(`SELECT COUNT(1)::int AS c FROM sys_menu WHERE parent_id = $1`, [req.params.id]);
     if (has.rows[0].c > 0) return res.status(400).json({ message: '请先删除子菜单' });
+    const before = await pool.query(`SELECT * FROM sys_menu WHERE id = $1`, [req.params.id]);
     const r = await pool.query(`DELETE FROM sys_menu WHERE id = $1`, [req.params.id]);
     if (!r.rowCount) return res.status(404).json({ message: '菜单不存在' });
-    logAction(req, '菜单管理', `删除菜单 ID=${req.params.id}`);
+    logAction(req, '菜单管理', `删除菜单 ID=${req.params.id}`, { before: before.rows[0] || null });
     return res.status(204).send();
   } catch (e) { return next(e); }
 });

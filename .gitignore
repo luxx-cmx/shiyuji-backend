@@ -7,3 +7,4 @@ yarn-error.log*
 *.log
 server.log
 server.err.log
+backups/

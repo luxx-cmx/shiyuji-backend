@@ -49,6 +49,8 @@ app.use('/api/sys/logs', sysLogRoutes);
 app.use('/api/sys/params', sysParamRoutes);
 app.use('/api/sys/food-categories', sysFoodCategoryRoutes);
 app.use('/api/sys/backup', sysBackupRoutes);
+app.use('/api/dept', sysDeptRoutes);
+app.use('/api/menu', sysMenuRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
