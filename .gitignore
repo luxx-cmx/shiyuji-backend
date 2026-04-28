@@ -8,3 +8,4 @@ yarn-error.log*
 server.log
 server.err.log
 backups/
+PROJECT_INFO.md
