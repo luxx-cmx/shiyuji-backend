@@ -1,0 +1,23 @@
+{
+  "apps": [
+    {
+      "name": "shiyuji",
+      "script": "src/server.js",
+      "cwd": "/opt/shiyujihouduan",
+      "instances": 1,
+      "exec_mode": "fork",
+      "watch": false,
+      "autorestart": true,
+      "restart_delay": 3000,
+      "max_restarts": 10,
+      "env_production": {
+        "NODE_ENV": "production",
+        "PORT": 3000
+      },
+      "log_date_format": "YYYY-MM-DD HH:mm:ss",
+      "error_file": "/var/log/shiyuji-error.log",
+      "out_file": "/var/log/shiyuji.log",
+      "merge_logs": true
+    }
+  ]
+}
